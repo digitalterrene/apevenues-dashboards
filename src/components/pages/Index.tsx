@@ -1,0 +1,222 @@
+
+'use client'
+import React from 'react'; 
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building2, Users, MapPin, Star, ArrowRight, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import './App.css'
+const Index = () => {
+  const router = useRouter();
+
+  const features = [
+    {
+      icon: Building2,
+      title: 'Easy Venue Management',
+      description: 'Simple tools to list and manage your venue properties with detailed information and photos.'
+    },
+    {
+      icon: Users,
+      title: 'Connect with Customers',
+      description: 'Reach customers looking for the perfect venue for their events and gatherings.'
+    },
+    {
+      icon: MapPin,
+      title: 'Location-Based Discovery',
+      description: 'Customers can find your venue through our interactive map and location-based search.'
+    },
+    {
+      icon: Star,
+      title: 'Build Your Reputation',
+      description: 'Collect reviews and build trust with potential customers through our review system.'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">A</span>
+              </div>
+              <h1 className="text-2xl font-bold text-orange-600">APE Dashboard</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => router.push('/listings')}
+                variant="outline"
+                className="border-orange-600 text-orange-600 hover:bg-orange-50"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Find Venues
+              </Button>
+              <Button
+                onClick={() => router.push('/login')}
+                variant="outline"
+              >
+                Sign In
+              </Button>
+              <Button
+                onClick={() => router.push('/signup')}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                List Your Venue
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Connect Venues with
+            <span className="text-orange-600"> Perfect Events</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Whether you're a venue owner looking to reach more customers or an event planner 
+            searching for the perfect space, APE Dashboard makes it simple.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              onClick={() => router.push('/listings')}
+              size="lg"
+              className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-3"
+            >
+              <Search className="h-5 w-5 mr-2" />
+              Find Venues
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+            <Button
+              onClick={() => router.push('/signup')}
+              size="lg"
+              variant="outline"
+              className="border-orange-600 text-orange-600 hover:bg-orange-50 text-lg px-8 py-3"
+            >
+              <Building2 className="h-5 w-5 mr-2" />
+              List Your Venue
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Why Choose APE Dashboard?
+            </h2>
+            <p className="text-xl text-gray-600">
+              Everything you need to manage your venue business and connect with customers
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <Card key={index} className="text-center hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <Icon className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-gray-600">
+                      {feature.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-orange-600">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Get Started?
+          </h2>
+          <p className="text-xl text-orange-100 mb-8">
+            Join thousands of venue owners who trust APE Dashboard to grow their business
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              onClick={() => router.push('/signup')}
+              size="lg"
+              variant="secondary"
+              className="bg-white text-orange-600 hover:bg-gray-50 text-lg px-8 py-3"
+            >
+              Start Free Trial
+            </Button>
+            <Button
+              onClick={() => router.push('/listings')}
+              size="lg"
+              variant="outline"
+              className="border-white hover:text-white hover:bg-orange-700 text-lg px-8 py-3"
+            >
+              Browse Venues
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold">A</span>
+                </div>
+                <span className="text-xl font-bold">APE Dashboard</span>
+              </div>
+              <p className="text-gray-400">
+                Connecting venues with perfect events since 2024.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">For Venues</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><button onClick={() => router.push('/signup')}>List Your Venue</button></li>
+                <li><button onClick={() => router.push('/login')}>Business Login</button></li>
+                <li>Pricing Plans</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">For Customers</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><button onClick={() => router.push('/listings')}>Find Venues</button></li>
+                <li>Browse by Location</li>
+                <li>Event Planning Tips</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li>Help Center</li>
+                <li>Contact Us</li>
+                <li>Terms of Service</li>
+                <li>Privacy Policy</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 APE Dashboard. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Index;
