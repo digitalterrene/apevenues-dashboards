@@ -1,10 +1,8 @@
-
-"use client"
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { 
+"use client";
+import React from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -14,47 +12,57 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-  SidebarInset
-} from '@/components/ui/sidebar';
-import { 
-  Home, 
-  Building2, 
-  User, 
+  SidebarInset,
+} from "@/components/ui/sidebar";
+import {
+  Home,
+  Building2,
+  User,
   LogOut,
   CreditCard,
-  Calendar
-} from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+  Calendar,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { NavUser } from "../nav-user";
 
-const DashboardLayout = ({children}:any) => {
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, logout } = useAuth();
-  const router = useRouter();  
+  const router = useRouter();
+  const pathname = usePathname();
+
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.push("/login");
   };
 
   const navigationItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/dashboard/properties', label: 'Properties', icon: Building2 },
-    { path: '/dashboard/bookings', label: 'Bookings', icon: Calendar },
-    { path: '/dashboard/subscriptions', label: 'Subscriptions', icon: CreditCard },
-    { path: '/dashboard/profile', label: 'Profile', icon: User },
+    { path: "/dashboard", label: "Dashboard", icon: Home },
+    { path: "/dashboard/properties", label: "Properties", icon: Building2 },
+    { path: "/dashboard/bookings", label: "Bookings", icon: Calendar },
+    {
+      path: "/dashboard/subscriptions",
+      label: "Subscriptions",
+      icon: CreditCard,
+    },
+    { path: "/dashboard/profile", label: "Profile", icon: User },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => pathname === path;
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <Sidebar>
+      <div className="flex h-screen w-full">
+        {/* Sidebar */}
+        <Sidebar className="absolute h-full">
           <SidebarHeader className="p-6 border-b">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">A</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-orange-600">APE Dashboard</h1>
+                <h1 className="text-xl font-bold text-orange-600">
+                  APE Dashboard
+                </h1>
                 <p className="text-xs text-gray-600">Business Dashboard</p>
               </div>
             </div>
@@ -66,7 +74,7 @@ const DashboardLayout = ({children}:any) => {
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton 
+                    <SidebarMenuButton
                       asChild
                       isActive={isActive(item.path)}
                       className="w-full"
@@ -75,8 +83,8 @@ const DashboardLayout = ({children}:any) => {
                         onClick={() => router.push(item.path)}
                         className={`flex items-center space-x-3 w-full px-3 py-2 rounded-md transition-colors ${
                           isActive(item.path)
-                            ? 'bg-orange-100 text-orange-600'
-                            : 'text-gray-600 hover:bg-gray-100'
+                            ? "bg-orange-100 text-orange-600"
+                            : "text-gray-600 hover:bg-gray-100"
                         }`}
                       >
                         <Icon className="h-5 w-5" />
@@ -90,8 +98,10 @@ const DashboardLayout = ({children}:any) => {
           </SidebarContent>
 
           <SidebarFooter className="p-4 border-t">
-            <div className="mb-4">
-              <p className="text-sm font-medium text-gray-900">{user?.businessName}</p>
+            {/* <div className="mb-4">
+              <p className="text-sm font-medium text-gray-900">
+                {user?.businessName}
+              </p>
               <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
             <Button
@@ -101,11 +111,12 @@ const DashboardLayout = ({children}:any) => {
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
-            </Button>
+            </Button> */}
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset className="flex-1 ml-52 pl-10">
+        {/* Main content area using SidebarInset */}
+        <SidebarInset className="flex-1 flex flex-col">
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
             <div className="flex-1">
@@ -114,9 +125,7 @@ const DashboardLayout = ({children}:any) => {
               </h2>
             </div>
           </header>
-          <div className="flex-1 p-6">
-          {children}
-          </div>
+          <main className="flex-1 p-6 overflow-auto">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>
