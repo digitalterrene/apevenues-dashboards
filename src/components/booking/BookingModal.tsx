@@ -1,16 +1,26 @@
-
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Users, MapPin } from 'lucide-react';
-import { format } from 'date-fns';
-import { Property } from '../../types';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon, Users, MapPin } from "lucide-react";
+import { format } from "date-fns";
+import { Property } from "../../types";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface BookingModalProps {
   property: Property;
@@ -18,39 +28,41 @@ interface BookingModalProps {
   onClose: () => void;
 }
 
-interface BookingRequest {
-  id: string;
-  propertyId: string;
-  propertyName: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  eventDate: string;
-  guestCount: number;
-  specialRequests: string;
-  status: 'pending' | 'confirmed' | 'rejected';
-  createdAt: string;
-}
-
-const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }) => {
+const BookingModal: React.FC<BookingModalProps> = ({
+  property,
+  isOpen,
+  onClose,
+}) => {
   const [formData, setFormData] = useState({
-    customerName: '',
-    customerEmail: '',
-    customerPhone: '',
-    guestCount: '',
-    specialRequests: ''
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    guestCount: "",
+    specialRequests: "",
   });
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
     if (!selectedDate) {
       toast({
         title: "Error",
         description: "Please select an event date",
-        variant: "destructive"
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (parseInt(formData.guestCount) > property.capacity) {
+      toast({
+        title: "Error",
+        description: `Guest count exceeds venue capacity (max ${property.capacity})`,
+        variant: "destructive",
       });
       return;
     }
@@ -58,68 +70,105 @@ const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }
     setIsSubmitting(true);
 
     try {
-      const bookingRequest: BookingRequest = {
-        id: Date.now().toString(),
+      const bookingData = {
         propertyId: property.id,
-        propertyName: property.name,
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
         eventDate: selectedDate.toISOString(),
         guestCount: parseInt(formData.guestCount),
         specialRequests: formData.specialRequests,
-        status: 'pending',
-        createdAt: new Date().toISOString()
       };
 
-      // Store booking request in localStorage
-      const existingBookings = JSON.parse(localStorage.getItem('apevenues_bookings') || '[]');
-      existingBookings.push(bookingRequest);
-      localStorage.setItem('apevenues_bookings', JSON.stringify(existingBookings));
+      // Pre-fill user info if logged in
+      if (user) {
+        bookingData.customerName = user.contactPerson || user.businessName;
+        bookingData.customerEmail = user.email;
+      }
 
-      toast({
-        title: "Booking Request Sent!",
-        description: "Your booking request has been sent to the venue. They will contact you soon.",
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingData),
       });
 
-      onClose();
-      
-      // Reset form
-      setFormData({
-        customerName: '',
-        customerEmail: '',
-        customerPhone: '',
-        guestCount: '',
-        specialRequests: ''
-      });
-      setSelectedDate(undefined);
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Booking Request Sent!",
+          description: "Your booking request has been submitted successfully.",
+        });
+        onClose();
+        resetForm();
+      } else {
+        throw new Error(data.error || "Failed to submit booking");
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to send booking request. Please try again.",
-        variant: "destructive"
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to send booking request",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      customerName: "",
+      customerEmail: "",
+      customerPhone: "",
+      guestCount: "",
+      specialRequests: "",
+    });
+    setSelectedDate(undefined);
+  };
+
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
+  // Pre-fill form when user is logged in
+  useEffect(() => {
+    if (user && isOpen) {
+      setFormData((prev) => ({
+        ...prev,
+        customerName: user.contactPerson || user.businessName || "",
+        customerEmail: user.email || "",
+        customerPhone: user.phone || "",
+      }));
+    }
+  }, [user, isOpen]);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+          resetForm();
+        }
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Book {property.name}</DialogTitle>
           <DialogDescription>
             <div className="flex items-center space-x-2 text-sm text-gray-600 mt-2">
               <MapPin className="h-4 w-4" />
-              <span>{property.address}, {property.city}</span>
+              <span>
+                {property.address}, {property.city}
+              </span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <Users className="h-4 w-4" />
@@ -135,7 +184,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }
               <Input
                 id="customerName"
                 value={formData.customerName}
-                onChange={(e) => handleInputChange('customerName', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("customerName", e.target.value)
+                }
                 required
               />
             </div>
@@ -145,7 +196,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }
                 id="customerPhone"
                 type="tel"
                 value={formData.customerPhone}
-                onChange={(e) => handleInputChange('customerPhone', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("customerPhone", e.target.value)
+                }
                 required
               />
             </div>
@@ -157,7 +210,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }
               id="customerEmail"
               type="email"
               value={formData.customerEmail}
-              onChange={(e) => handleInputChange('customerEmail', e.target.value)}
+              onChange={(e) =>
+                handleInputChange("customerEmail", e.target.value)
+              }
               required
             />
           </div>
@@ -194,7 +249,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }
                 min="1"
                 max={property.capacity}
                 value={formData.guestCount}
-                onChange={(e) => handleInputChange('guestCount', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("guestCount", e.target.value)
+                }
                 required
               />
             </div>
@@ -205,7 +262,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }
             <Textarea
               id="specialRequests"
               value={formData.specialRequests}
-              onChange={(e) => handleInputChange('specialRequests', e.target.value)}
+              onChange={(e) =>
+                handleInputChange("specialRequests", e.target.value)
+              }
               placeholder="Any special requirements or requests..."
               rows={3}
             />
@@ -215,7 +274,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+                resetForm();
+              }}
               className="flex-1"
             >
               Cancel
@@ -225,7 +287,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ property, isOpen, onClose }
               disabled={isSubmitting}
               className="flex-1 bg-orange-600 hover:bg-orange-700"
             >
-              {isSubmitting ? 'Sending...' : 'Send Request'}
+              {isSubmitting ? "Sending..." : "Send Request"}
             </Button>
           </div>
         </form>

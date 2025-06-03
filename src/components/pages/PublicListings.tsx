@@ -1,15 +1,26 @@
-
-'use client'
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Users, Star, Filter } from 'lucide-react';
-import { Property } from '../../types';
-import PropertyMap from '../map/PropertyMap';
-import BookingModal from '../booking/BookingModal';
+"use client";
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Users, Star, Filter } from "lucide-react";
+import { Property } from "../../types";
+import PropertyMap from "../map/PropertyMap";
+import BookingModal from "../booking/BookingModal";
 import {
   Pagination,
   PaginationContent,
@@ -17,64 +28,79 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
+} from "@/components/ui/pagination";
 
 const PublicListings = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
-  const [selectedCity, setSelectedCity] = useState('all');
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState("all");
+  const [selectedCity, setSelectedCity] = useState("all");
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(
+    null
+  );
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showMap, setShowMap] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const propertiesPerPage = 6;
 
   useEffect(() => {
-    loadProperties();
+    const fetchProperties = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch("/api/properties");
+        const data = await response.json();
+
+        if (response.ok) {
+          setProperties(data.properties);
+        } else {
+          setError(data.error || "Failed to fetch properties");
+        }
+      } catch (err) {
+        setError("Network error occurred while fetching properties");
+        console.error("Fetch error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProperties();
   }, []);
 
   useEffect(() => {
     filterProperties();
   }, [properties, searchTerm, selectedType, selectedCity]);
 
-  const loadProperties = () => {
-    try {
-      const allProperties = JSON.parse(localStorage.getItem('apevenues_properties') || '[]');
-      const activeProperties = allProperties.filter((p: Property) => p.isActive);
-      setProperties(activeProperties);
-    } catch (error) {
-      console.error('Error loading properties:', error);
-      setProperties([]);
-    }
-  };
-
   const filterProperties = () => {
-    let filtered = properties;
+    let filtered = properties.filter((p) => p.isActive);
 
     if (searchTerm) {
-      filtered = filtered.filter(property =>
-        property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.address.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (property) =>
+          property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          property.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          property.address.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    if (selectedType !== 'all') {
-      filtered = filtered.filter(property => property.type === selectedType);
+    if (selectedType !== "all") {
+      filtered = filtered.filter((property) => property.type === selectedType);
     }
 
-    if (selectedCity !== 'all') {
-      filtered = filtered.filter(property => property.city === selectedCity);
+    if (selectedCity !== "all") {
+      filtered = filtered.filter((property) => property.city === selectedCity);
     }
 
     setFilteredProperties(filtered);
     setCurrentPage(1);
   };
 
-  const uniqueCities = [...new Set(properties.map(p => p.city))];
-  const propertyTypes = ['restaurant', 'bar', 'cafe', 'club', 'hotel', 'other'];
+  const uniqueCities = [...new Set(properties.map((p) => p.city))];
+  const propertyTypes = ["restaurant", "bar", "cafe", "club", "hotel", "other"];
 
   const paginatedProperties = filteredProperties.slice(
     (currentPage - 1) * propertiesPerPage,
@@ -90,23 +116,58 @@ const PublicListings = () => {
 
   const getPriceRangeDisplay = (priceRange: string) => {
     const ranges = {
-      budget: 'R',
-      moderate: 'RR',
-      upscale: 'RRR',
-      luxury: 'RRRR'
+      budget: "R",
+      moderate: "RR",
+      upscale: "RRR",
+      luxury: "RRRR",
     };
-    return ranges[priceRange as keyof typeof ranges] || '$';
+    return ranges[priceRange as keyof typeof ranges] || "$";
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading venues...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Error loading venues
+          </h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-orange-600 hover:bg-orange-700"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen  bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Find Your Perfect Venue</h1>
-              <p className="text-gray-600 mt-2">Discover amazing venues for your events and gatherings</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Find Your Perfect Venue
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Discover amazing venues for your events and gatherings
+              </p>
             </div>
             <Button
               onClick={() => setShowMap(!showMap)}
@@ -114,7 +175,7 @@ const PublicListings = () => {
               className="flex items-center space-x-2"
             >
               <MapPin className="h-4 w-4" />
-              <span>{showMap ? 'Hide Map' : 'Show Map'}</span>
+              <span>{showMap ? "Hide Map" : "Show Map"}</span>
             </Button>
           </div>
         </div>
@@ -142,7 +203,7 @@ const PublicListings = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  {propertyTypes.map(type => (
+                  {propertyTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type.charAt(0).toUpperCase() + type.slice(1)}
                     </SelectItem>
@@ -155,8 +216,10 @@ const PublicListings = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Cities</SelectItem>
-                  {uniqueCities.map(city => (
-                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                  {uniqueCities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -179,7 +242,10 @@ const PublicListings = () => {
         {/* Properties Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {paginatedProperties.map((property) => (
-            <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card
+              key={property.id}
+              className="overflow-hidden hover:shadow-lg transition-shadow"
+            >
               <div className="aspect-video bg-gray-200 relative">
                 {property.images && property.images.length > 0 ? (
                   <img
@@ -204,16 +270,18 @@ const PublicListings = () => {
                     <CardTitle className="text-lg">{property.name}</CardTitle>
                     <CardDescription className="flex items-center space-x-1 mt-1">
                       <MapPin className="h-4 w-4" />
-                      <span>{property.city}, {property.state}</span>
+                      <span>
+                        {property.city}, {property.state}
+                      </span>
                     </CardDescription>
                   </div>
-                  <Badge variant="outline">
-                    {property.type}
-                  </Badge>
+                  <Badge variant="outline">{property.type}</Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{property.description}</p>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  {property.description}
+                </p>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-1 text-sm text-gray-600">
                     <Users className="h-4 w-4" />
@@ -224,7 +292,7 @@ const PublicListings = () => {
                     <span className="text-sm text-gray-600">4.8</span>
                   </div>
                 </div>
-                <Button 
+                <Button
                   onClick={() => handleBooking(property)}
                   className="w-full bg-orange-600 hover:bg-orange-700"
                 >
@@ -241,9 +309,13 @@ const PublicListings = () => {
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious 
+                  <PaginationPrevious
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    className={
+                      currentPage === 1
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
                   />
                 </PaginationItem>
                 {[...Array(totalPages)].map((_, i) => (
@@ -258,9 +330,15 @@ const PublicListings = () => {
                   </PaginationItem>
                 ))}
                 <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
                   />
                 </PaginationItem>
               </PaginationContent>
@@ -269,10 +347,12 @@ const PublicListings = () => {
         )}
 
         {/* No results */}
-        {filteredProperties.length === 0 && (
+        {filteredProperties.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No venues found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No venues found
+            </h3>
             <p className="text-gray-600">Try adjusting your search criteria</p>
           </div>
         )}

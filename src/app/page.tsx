@@ -1,5 +1,9 @@
 import Index from "@/components/pages/Index";
 
 export default function Home() {
-  return <Index />;
+  return (
+    <div className="w-full">
+      <Index />
+    </div>
+  );
 }

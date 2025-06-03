@@ -1,8 +1,10 @@
-import PublicListings from '@/components/pages/PublicListings'
-import React from 'react'
+import PublicListings from "@/components/pages/PublicListings";
+import React from "react";
 
 export default function page() {
   return (
-    <div><PublicListings/></div>
-  )
+    <div className="w-full">
+      <PublicListings />
+    </div>
+  );
 }

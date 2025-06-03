@@ -1,32 +1,38 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'; 
-import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import React, { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    businessName: '',
-    contactPerson: '',
-    phone: '',
-    address: '',
+    email: "",
+    password: "",
+    confirmPassword: "",
+    businessName: "",
+    contactPerson: "",
+    phone: "",
+    address: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
@@ -47,13 +53,14 @@ const SignupForm = () => {
     try {
       const { confirmPassword, ...signupData } = formData;
       const success = await signup(signupData);
-      
+
       if (success) {
         toast({
           title: "Account created!",
-          description: "Welcome to APE Dashboard. You can now manage your properties.",
+          description:
+            "Welcome to APE Dashboard. You can now manage your properties.",
         });
-        router.push('/dashboard');
+        router.push("/dashboard");
       } else {
         toast({
           title: "Signup failed",
@@ -73,10 +80,12 @@ const SignupForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-orange-600">APE Dashboard</CardTitle>
+          <CardTitle className="text-2xl font-bold text-orange-600">
+            APE Dashboard
+          </CardTitle>
           <CardDescription>Create your business account</CardDescription>
         </CardHeader>
         <CardContent>
@@ -162,13 +171,17 @@ const SignupForm = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Create Account'}
+            <Button
+              type="submit"
+              className="w-full bg-orange-600 hover:bg-orange-700"
+              disabled={isLoading}
+            >
+              {isLoading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
           <div className="mt-4 text-center">
             <button
-              onClick={() => router.push('/login')}
+              onClick={() => router.push("/login")}
               className="text-orange-600 hover:text-orange-700 text-sm"
             >
               Already have an account? Sign in

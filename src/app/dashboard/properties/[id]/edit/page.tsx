@@ -1,8 +1,12 @@
-import PropertyForm from '@/components/pages/PropertyForm'
-import React from 'react'
+import PropertyEditForm from "@/components/dashboard/PropertyEditForm";
+import React from "react";
 
-export default function page() {
+export default async function page({ params }: { params: any }) {
+  const id = await params.id;
+
   return (
-    <div><PropertyForm /></div>
-  )
+    <div>
+      <PropertyEditForm id={id} />
+    </div>
+  );
 }

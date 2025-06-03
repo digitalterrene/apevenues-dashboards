@@ -1,125 +1,183 @@
-'use client'
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Users, Phone, Mail, MapPin, Clock, Filter, Search } from 'lucide-react';
-import { format } from 'date-fns';
-import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+"use client";
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Calendar,
+  Users,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  Filter,
+  Search,
+} from "lucide-react";
+import { format } from "date-fns";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface BookingRequest {
   id: string;
   propertyId: string;
   propertyName: string;
+  businessId: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   eventDate: string;
   guestCount: number;
   specialRequests: string;
-  status: 'pending' | 'confirmed' | 'rejected';
+  status: "pending" | "confirmed" | "rejected";
   createdAt: string;
+  updatedAt: string;
 }
 
 const Bookings = () => {
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
-  const [filteredBookings, setFilteredBookings] = useState<BookingRequest[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [filteredBookings, setFilteredBookings] = useState<BookingRequest[]>(
+    []
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    loadBookings();
-  }, []);
+    const fetchBookings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/bookings/business");
+        const data = await response.json();
+
+        if (response.ok) {
+          setBookings(data.bookings);
+        } else {
+          toast({
+            title: "Error",
+            description: data.error || "Failed to fetch bookings",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Network error occurred",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchBookings();
+    }
+  }, [user, toast]);
 
   useEffect(() => {
     filterBookings();
   }, [bookings, searchTerm, statusFilter]);
 
-  const loadBookings = () => {
-    try {
-      const allBookings = JSON.parse(localStorage.getItem('apevenues_bookings') || '[]');
-      const userProperties = JSON.parse(localStorage.getItem('apevenues_properties') || '[]')
-        .filter((p: any) => p.businessId === user?.id);
-      const userPropertyIds = userProperties.map((p: any) => p.id);
-      
-      const userBookings = allBookings.filter((booking: BookingRequest) => 
-        userPropertyIds.includes(booking.propertyId)
-      );
-      
-      setBookings(userBookings);
-    } catch (error) {
-      console.error('Error loading bookings:', error);
-      setBookings([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const filterBookings = () => {
     let filtered = bookings;
 
     if (searchTerm) {
-      filtered = filtered.filter(booking =>
-        booking.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.propertyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (booking) =>
+          booking?.customerName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking?.propertyName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking?.customerEmail
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
       );
     }
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(booking => booking.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((booking) => booking?.status === statusFilter);
     }
 
     setFilteredBookings(filtered);
   };
 
-  const updateBookingStatus = (bookingId: string, newStatus: 'confirmed' | 'rejected') => {
+  const updateBookingStatus = async (
+    bookingId: string,
+    newStatus: "confirmed" | "rejected"
+  ) => {
     try {
-      const allBookings = JSON.parse(localStorage.getItem('apevenues_bookings') || '[]');
-      const updatedBookings = allBookings.map((booking: BookingRequest) =>
-        booking.id === bookingId ? { ...booking, status: newStatus } : booking
-      );
-      
-      localStorage.setItem('apevenues_bookings', JSON.stringify(updatedBookings));
-      loadBookings();
-      
-      toast({
-        title: "Booking Updated",
-        description: `Booking request has been ${newStatus}.`,
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
       });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setBookings((prev) =>
+          prev.map((booking) =>
+            booking?.id === bookingId
+              ? { ...booking, status: newStatus }
+              : booking
+          )
+        );
+        toast({
+          title: "Booking Updated",
+          description: `Booking request has been ${newStatus}.`,
+        });
+      } else {
+        throw new Error(data.error || "Failed to update booking");
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update booking status.",
-        variant: "destructive"
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update booking status",
+        variant: "destructive",
       });
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
+      case "confirmed":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-yellow-100 text-yellow-800';
+        return "bg-yellow-100 text-yellow-800";
     }
   };
 
   const getStatusCounts = () => {
     return {
       total: bookings.length,
-      pending: bookings.filter(b => b.status === 'pending').length,
-      confirmed: bookings.filter(b => b.status === 'confirmed').length,
-      rejected: bookings.filter(b => b.status === 'rejected').length
+      pending: bookings.filter((b) => b.status === "pending").length,
+      confirmed: bookings.filter((b) => b.status === "confirmed").length,
+      rejected: bookings.filter((b) => b.status === "rejected").length,
     };
   };
 
@@ -142,18 +200,22 @@ const Bookings = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Booking Requests</h1>
-        <p className="text-gray-600">Manage booking requests for your properties</p>
+        <p className="text-gray-600">
+          Manage booking requests for your properties
+        </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Requests
+            </CardTitle>
             <Calendar className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{statusCounts.total}</div>
+            <div className="text-2xl font-bold">{statusCounts?.total}</div>
           </CardContent>
         </Card>
         <Card>
@@ -162,7 +224,9 @@ const Bookings = () => {
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{statusCounts.pending}</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {statusCounts?.pending}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -171,7 +235,9 @@ const Bookings = () => {
             <Users className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{statusCounts.confirmed}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {statusCounts?.confirmed}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -180,7 +246,9 @@ const Bookings = () => {
             <MapPin className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{statusCounts.rejected}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {statusCounts?.rejected}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -224,27 +292,34 @@ const Bookings = () => {
 
       {/* Bookings List */}
       <div className="space-y-4">
-        {filteredBookings.length === 0 ? (
+        {filteredBookings?.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No booking requests</h3>
-              <p className="text-gray-600">You haven't received any booking requests yet.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No booking requests
+              </h3>
+              <p className="text-gray-600">
+                You haven't received any booking requests yet.
+              </p>
             </CardContent>
           </Card>
         ) : (
-          filteredBookings.map((booking) => (
-            <Card key={booking.id}>
+          filteredBookings?.map((booking) => (
+            <Card key={booking?.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg">{booking.propertyName}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {booking?.propertyName}
+                    </CardTitle>
                     <CardDescription>
-                      Booking request from {booking.customerName}
+                      Booking request from {booking?.customerName}
                     </CardDescription>
                   </div>
-                  <Badge className={getStatusColor(booking.status)}>
-                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                  <Badge className={getStatusColor(booking?.status)}>
+                    {booking?.status.charAt(0).toUpperCase() +
+                      booking?.status.slice(1)}
                   </Badge>
                 </div>
               </CardHeader>
@@ -254,51 +329,59 @@ const Bookings = () => {
                     <div className="flex items-center space-x-2 text-sm">
                       <Users className="h-4 w-4 text-gray-600" />
                       <span className="font-medium">Guest Count:</span>
-                      <span>{booking.guestCount} guests</span>
+                      <span>{booking?.guestCount} guests</span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
                       <Calendar className="h-4 w-4 text-gray-600" />
                       <span className="font-medium">Event Date:</span>
-                      <span>{format(new Date(booking.eventDate), 'PPP')}</span>
+                      <span>{format(new Date(booking?.eventDate), "PPP")}</span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
                       <Clock className="h-4 w-4 text-gray-600" />
                       <span className="font-medium">Requested:</span>
-                      <span>{format(new Date(booking.createdAt), 'PPp')}</span>
+                      <span>{format(new Date(booking?.createdAt), "PPp")}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2 text-sm">
                       <Mail className="h-4 w-4 text-gray-600" />
                       <span className="font-medium">Email:</span>
-                      <span>{booking.customerEmail}</span>
+                      <span>{booking?.customerEmail}</span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
                       <Phone className="h-4 w-4 text-gray-600" />
                       <span className="font-medium">Phone:</span>
-                      <span>{booking.customerPhone}</span>
+                      <span>{booking?.customerPhone}</span>
                     </div>
                   </div>
                 </div>
-                
-                {booking.specialRequests && (
+
+                {booking?.specialRequests && (
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium text-sm text-gray-900 mb-1">Special Requests:</h4>
-                    <p className="text-sm text-gray-600">{booking.specialRequests}</p>
+                    <h4 className="font-medium text-sm text-gray-900 mb-1">
+                      Special Requests:
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {booking?.specialRequests}
+                    </p>
                   </div>
                 )}
 
-                {booking.status === 'pending' && (
+                {booking?.status === "pending" && (
                   <div className="flex space-x-3 mt-6">
                     <Button
-                      onClick={() => updateBookingStatus(booking.id, 'rejected')}
+                      onClick={() =>
+                        updateBookingStatus(booking?.id, "rejected")
+                      }
                       variant="outline"
                       className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
                     >
                       Reject
                     </Button>
                     <Button
-                      onClick={() => updateBookingStatus(booking.id, 'confirmed')}
+                      onClick={() =>
+                        updateBookingStatus(booking?.id, "confirmed")
+                      }
                       className="flex-1 bg-green-600 hover:bg-green-700"
                     >
                       Confirm Booking
