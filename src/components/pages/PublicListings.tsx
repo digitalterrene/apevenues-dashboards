@@ -19,6 +19,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Users, Star, Filter } from "lucide-react";
 import { Property } from "../../types";
+import PropertyMap from "../map/PropertyMap";
+import BookingModal from "../booking/BookingModal";
 import {
   Pagination,
   PaginationContent,
@@ -39,6 +41,7 @@ const PublicListings = () => {
   );
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showMap, setShowMap] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const propertiesPerPage = 6;
@@ -298,7 +301,7 @@ const PublicListings = () => {
                     }
                   />
                 </PaginationItem>
-                {[...Array(totalPages)]?.map((_, i) => (
+                {[...Array(totalPages)].map((_, i) => (
                   <PaginationItem key={i}>
                     <PaginationLink
                       onClick={() => setCurrentPage(i + 1)}
@@ -337,6 +340,15 @@ const PublicListings = () => {
           </div>
         )}
       </div>
+
+      {/* Booking Modal */}
+      {showBookingModal && selectedProperty && (
+        <BookingModal
+          property={selectedProperty}
+          isOpen={showBookingModal}
+          onClose={() => setShowBookingModal(false)}
+        />
+      )}
     </div>
   );
 };
