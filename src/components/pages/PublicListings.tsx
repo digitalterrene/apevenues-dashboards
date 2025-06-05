@@ -19,7 +19,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Users, Star, Filter } from "lucide-react";
 import { Property } from "../../types";
-import PropertyMap from "../map/PropertyMap";
 import {
   Pagination,
   PaginationContent,
@@ -40,7 +39,6 @@ const PublicListings = () => {
   );
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showMap, setShowMap] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const propertiesPerPage = 6;
@@ -221,15 +219,6 @@ const PublicListings = () => {
           </CardContent>
         </Card>
 
-        {/* Map */}
-        {showMap && (
-          <Card className="mb-6">
-            <CardContent className="p-0">
-              <PropertyMap properties={filteredProperties} />
-            </CardContent>
-          </Card>
-        )}
-
         {/* Properties Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {paginatedProperties.map((property) => (
@@ -309,7 +298,7 @@ const PublicListings = () => {
                     }
                   />
                 </PaginationItem>
-                {[...Array(totalPages)].map((_, i) => (
+                {[...Array(totalPages)]?.map((_, i) => (
                   <PaginationItem key={i}>
                     <PaginationLink
                       onClick={() => setCurrentPage(i + 1)}
