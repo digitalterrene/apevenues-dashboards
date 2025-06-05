@@ -20,7 +20,6 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Users, Star, Filter } from "lucide-react";
 import { Property } from "../../types";
 import PropertyMap from "../map/PropertyMap";
-import BookingModal from "../booking/BookingModal";
 import {
   Pagination,
   PaginationContent,
@@ -169,14 +168,6 @@ const PublicListings = () => {
                 Discover amazing venues for your events and gatherings
               </p>
             </div>
-            <Button
-              onClick={() => setShowMap(!showMap)}
-              variant="outline"
-              className="flex items-center space-x-2"
-            >
-              <MapPin className="h-4 w-4" />
-              <span>{showMap ? "Hide Map" : "Show Map"}</span>
-            </Button>
           </div>
         </div>
       </div>
@@ -357,15 +348,6 @@ const PublicListings = () => {
           </div>
         )}
       </div>
-
-      {/* Booking Modal */}
-      {showBookingModal && selectedProperty && (
-        <BookingModal
-          property={selectedProperty}
-          isOpen={showBookingModal}
-          onClose={() => setShowBookingModal(false)}
-        />
-      )}
     </div>
   );
 };
