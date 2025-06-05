@@ -1,35 +1,42 @@
-
-import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
-import { User, Building2, Globe, Phone, Mail, MapPin } from 'lucide-react';
+import React, { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
+import { User, Building2, Globe, Phone, Mail, MapPin } from "lucide-react";
 
 const ProfileSettings = () => {
   const { user, updateProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    businessName: user?.businessName || '',
-    contactPerson: user?.contactPerson || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
-    website: '',
-    description: '',
-    facebook: '',
-    instagram: '',
-    twitter: '',
+    businessName: user?.businessName || "",
+    contactPerson: user?.contactPerson || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    website: "",
+    description: "",
+    facebook: "",
+    instagram: "",
+    twitter: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -38,13 +45,7 @@ const ProfileSettings = () => {
     setIsLoading(true);
 
     try {
-      updateProfile({
-        businessName: formData.businessName,
-        contactPerson: formData.contactPerson,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-      });
+      updateProfile(formData);
 
       toast({
         title: "Profile updated",
@@ -65,7 +66,9 @@ const ProfileSettings = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-gray-600">Manage your business profile and account settings</p>
+        <p className="text-gray-600">
+          Manage your business profile and account settings
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -202,7 +205,9 @@ const ProfileSettings = () => {
         <Card>
           <CardHeader>
             <CardTitle>Social Media</CardTitle>
-            <CardDescription>Connect your social media accounts (optional)</CardDescription>
+            <CardDescription>
+              Connect your social media accounts (optional)
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -250,7 +255,9 @@ const ProfileSettings = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-orange-50 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600">
-                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                  {user?.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString()
+                    : "N/A"}
                 </div>
                 <div className="text-sm text-gray-600">Member Since</div>
               </div>
@@ -268,12 +275,12 @@ const ProfileSettings = () => {
 
         {/* Submit */}
         <div className="flex justify-end">
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="bg-orange-600 hover:bg-orange-700"
             disabled={isLoading}
           >
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>
