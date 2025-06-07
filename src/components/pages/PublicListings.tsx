@@ -19,7 +19,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Users, Star, Filter } from "lucide-react";
 import { Property } from "../../types";
-import PropertyMap from "../map/PropertyMap";
 import BookingModal from "../booking/BookingModal";
 import {
   Pagination,
@@ -29,6 +28,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import Header from "../layout/header";
 
 const PublicListings = () => {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -158,7 +158,8 @@ const PublicListings = () => {
   return (
     <div className="min-h-screen  bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <Header />
+      <div className="bg-white ">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>

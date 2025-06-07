@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import "./App.css";
+import Header from "../layout/header";
 const Index = () => {
   const router = useRouter();
 
@@ -51,40 +52,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">A</span>
-              </div>
-              <h1 className="text-2xl font-bold text-orange-600">
-                APE Dashboard
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={() => router.push("/listings")}
-                variant="outline"
-                className="border-orange-600 text-orange-600 hover:bg-orange-50"
-              >
-                <Search className="h-4 w-4 mr-2" />
-                Find Venues
-              </Button>
-              <Button onClick={() => router.push("/login")} variant="outline">
-                Sign In
-              </Button>
-              <Button
-                onClick={() => router.push("/signup")}
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                List Your Venue
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+      <Header />
       {/* Hero Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
