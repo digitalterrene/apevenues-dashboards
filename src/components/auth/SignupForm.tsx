@@ -12,8 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
@@ -41,10 +41,8 @@ const SignupForm = () => {
     setIsLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Passwords do not match.",
-        variant: "destructive",
       });
       setIsLoading(false);
       return;
@@ -55,28 +53,23 @@ const SignupForm = () => {
       const success = await signup(signupData);
 
       if (success) {
-        toast({
-          title: "Account created!",
+        toast.success("Account created!", {
           description:
             "Welcome to APE Dashboard. You can now manage your properties.",
         });
         router.push("/dashboard");
       } else {
-        toast({
-          title: "Signup failed",
+        toast.error("Signup failed", {
           description: "An account with this email already exists.",
-          variant: "destructive",
         });
       }
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "An unexpected error occurred.",
-        variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

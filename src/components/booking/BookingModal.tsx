@@ -19,8 +19,8 @@ import {
 import { CalendarIcon, Users, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { Property } from "../../types";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "../../contexts/AuthContext";
+import { toast } from "sonner";
 
 interface BookingModalProps {
   property: Property;
@@ -42,7 +42,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
   });
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,19 +49,17 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
     // Validate required fields
     if (!selectedDate) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Please select an event date",
-        variant: "destructive",
+        position: "top-right",
       });
       return;
     }
 
     if (parseInt(formData.guestCount) > property.capacity) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: `Guest count exceeds venue capacity (max ${property.capacity})`,
-        variant: "destructive",
+        position: "top-right",
       });
       return;
     }
@@ -97,9 +94,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
       const data = await response.json();
 
       if (response.ok) {
-        toast({
-          title: "Booking Request Sent!",
+        toast.success("Booking Request Sent!", {
           description: "Your booking request has been submitted successfully.",
+          position: "top-right",
         });
         onClose();
         resetForm();
@@ -107,13 +104,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
         throw new Error(data.error || "Failed to submit booking");
       }
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description:
           error instanceof Error
             ? error.message
             : "Failed to send booking request",
-        variant: "destructive",
+        position: "top-right",
       });
     } finally {
       setIsSubmitting(false);

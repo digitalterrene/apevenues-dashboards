@@ -11,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
+// import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -20,7 +21,6 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -28,27 +28,22 @@ const LoginForm = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        toast({
-          title: "Welcome back!",
+        toast.success("Welcome back!", {
           description: "You have successfully logged in.",
         });
         router.push("/dashboard");
       } else {
-        toast({
-          title: "Login failed",
+        toast.error("Login failed", {
           description: "Invalid email or password.",
-          variant: "destructive",
         });
       }
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "An unexpected error occurred.",
-        variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
