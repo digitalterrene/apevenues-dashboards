@@ -281,7 +281,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-orange-600 hover:bg-orange-700"
+              className="flex-1 bg-[#6BADA0] hover:bg-[#8E9196]"
             >
               {isSubmitting ? "Sending..." : "Send Request"}
             </Button>

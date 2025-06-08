@@ -76,7 +76,7 @@ const ProfileSettings = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-orange-600" />
+              <Building2 className="h-5 w-5 text-[#6BADA0]" />
               <CardTitle>Business Information</CardTitle>
             </div>
             <CardDescription>Update your business details</CardDescription>
@@ -141,7 +141,7 @@ const ProfileSettings = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-orange-600" />
+              <User className="h-5 w-5 text-[#6BADA0]" />
               <CardTitle>Contact Information</CardTitle>
             </div>
             <CardDescription>How customers can reach you</CardDescription>
@@ -254,7 +254,7 @@ const ProfileSettings = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">
+                <div className="text-2xl font-bold text-[#6BADA0]">
                   {user?.createdAt
                     ? new Date(user.createdAt).toLocaleDateString()
                     : "N/A"}
@@ -277,7 +277,7 @@ const ProfileSettings = () => {
         <div className="flex justify-end">
           <Button
             type="submit"
-            className="bg-orange-600 hover:bg-orange-700"
+            className="bg-[#6BADA0] hover:bg-[#8E9196]"
             disabled={isLoading}
           >
             {isLoading ? "Saving..." : "Save Changes"}

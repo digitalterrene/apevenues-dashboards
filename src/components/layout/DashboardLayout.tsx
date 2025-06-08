@@ -55,11 +55,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <Sidebar className="absolute h-full">
           <SidebarHeader className="p-6 border-b">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#6BADA0] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">A</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-orange-600">
+                <h1 className="text-xl font-bold text-[#6BADA0]">
                   APE Dashboard
                 </h1>
                 <p className="text-xs text-gray-600">Business Dashboard</p>
@@ -82,7 +82,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                         onClick={() => router.push(item.path)}
                         className={`flex items-center space-x-3 w-full px-3 py-2 rounded-md transition-colors ${
                           isActive(item.path)
-                            ? "bg-orange-100 text-orange-600"
+                            ? "bg-[#F1F0FB] text-[#6BADA0]"
                             : "text-gray-600 hover:bg-gray-100"
                         }`}
                       >

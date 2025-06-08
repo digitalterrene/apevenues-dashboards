@@ -42,7 +42,7 @@ export function TeamSwitcher({
           size="lg"
           className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
-          <div className="  bg-orange-600  text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+          <div className="  bg-[#6BADA0]  text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
             APE
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">

@@ -1,44 +1,50 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useProperties } from '../../hooks/useProperties';
-import { useAuth } from '../../contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Building2, Plus, Eye, Users, TrendingUp, User } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useProperties } from "../../hooks/useProperties";
+import { useAuth } from "../../contexts/AuthContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Building2, Plus, Eye, Users, TrendingUp, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const DashboardHome = () => {
   const { properties, isLoading } = useProperties();
   const { user } = useAuth();
   const router = useRouter();
 
-  const activeProperties = properties.filter(p => p.isActive);
+  const activeProperties = properties.filter((p) => p.isActive);
   const totalCapacity = properties.reduce((sum, p) => sum + p.capacity, 0);
 
   const stats = [
     {
-      title: 'Total Properties',
+      title: "Total Properties",
       value: properties.length,
       icon: Building2,
-      description: 'All your listed venues',
+      description: "All your listed venues",
     },
     {
-      title: 'Active Listings',
+      title: "Active Listings",
       value: activeProperties.length,
       icon: Eye,
-      description: 'Currently visible to customers',
+      description: "Currently visible to customers",
     },
     {
-      title: 'Total Capacity',
+      title: "Total Capacity",
       value: totalCapacity,
       icon: Users,
-      description: 'Combined seating capacity',
+      description: "Combined seating capacity",
     },
     {
-      title: 'Performance',
-      value: '95%',
+      title: "Performance",
+      value: "95%",
       icon: TrendingUp,
-      description: 'Profile completion',
+      description: "Profile completion",
     },
   ];
 
@@ -59,12 +65,16 @@ const DashboardHome = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-600">Manage your venue listings and business profile</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Dashboard Overview
+          </h1>
+          <p className="text-gray-600">
+            Manage your venue listings and business profile
+          </p>
         </div>
-        <Button 
-          onClick={() => router.push('/dashboard/properties/new')}
-          className="bg-orange-600 hover:bg-orange-700"
+        <Button
+          onClick={() => router.push("/dashboard/properties/new")}
+          className="bg-[#6BADA0] hover:bg-[#8E9196]"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Property
@@ -81,10 +91,12 @@ const DashboardHome = () => {
                 <CardTitle className="text-sm font-medium text-gray-600">
                   {stat.title}
                 </CardTitle>
-                <Icon className="h-4 w-4 text-orange-600" />
+                <Icon className="h-4 w-4 text-[#6BADA0]" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {stat.value}
+                </div>
                 <p className="text-xs text-gray-500">{stat.description}</p>
               </CardContent>
             </Card>
@@ -100,9 +112,9 @@ const DashboardHome = () => {
               <CardTitle>Recent Properties</CardTitle>
               <CardDescription>Your latest venue listings</CardDescription>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={() => router.push('/dashboard/properties')}
+            <Button
+              variant="outline"
+              onClick={() => router.push("/dashboard/properties")}
             >
               View All
             </Button>
@@ -112,11 +124,15 @@ const DashboardHome = () => {
           {properties.length === 0 ? (
             <div className="text-center py-8">
               <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No properties yet</h3>
-              <p className="text-gray-600 mb-4">Start by adding your first venue listing</p>
-              <Button 
-                onClick={() => router.push('/dashboard/properties/new')}
-                className="bg-orange-600 hover:bg-orange-700"
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No properties yet
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Start by adding your first venue listing
+              </p>
+              <Button
+                onClick={() => router.push("/dashboard/properties/new")}
+                className="bg-[#6BADA0] hover:bg-[#8E9196]"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Property
@@ -125,10 +141,17 @@ const DashboardHome = () => {
           ) : (
             <div className="space-y-4">
               {properties.slice(0, 3).map((property) => (
-                <div key={property.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={property.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{property.name}</h4>
-                    <p className="text-sm text-gray-600">{property.address}, {property.city}</p>
+                    <h4 className="font-medium text-gray-900">
+                      {property.name}
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {property.address}, {property.city}
+                    </p>
                     <div className="flex items-center mt-2 space-x-4">
                       <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                         {property.type}
@@ -136,19 +159,23 @@ const DashboardHome = () => {
                       <span className="text-xs text-gray-500">
                         Capacity: {property.capacity}
                       </span>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        property.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {property.isActive ? 'Active' : 'Inactive'}
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${
+                          property.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {property.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/dashboard/properties/${property.id}/edit`)}
+                    onClick={() =>
+                      router.push(`/dashboard/properties/${property.id}/edit`)
+                    }
                   >
                     Edit
                   </Button>
@@ -170,9 +197,9 @@ const DashboardHome = () => {
             <Button
               variant="outline"
               className="h-auto p-4 flex flex-col items-start"
-              onClick={() => router.push('/dashboard/properties/new')}
+              onClick={() => router.push("/dashboard/properties/new")}
             >
-              <Plus className="h-5 w-5 mb-2 text-orange-600" />
+              <Plus className="h-5 w-5 mb-2 text-[#6BADA0]" />
               <div className="text-left">
                 <div className="font-medium">Add New Property</div>
                 <div className="text-xs text-gray-500">List a new venue</div>
@@ -181,9 +208,9 @@ const DashboardHome = () => {
             <Button
               variant="outline"
               className="h-auto p-4 flex flex-col items-start"
-              onClick={() => router.push('/dashboard/profile')}
+              onClick={() => router.push("/dashboard/profile")}
             >
-              <User className="h-5 w-5 mb-2 text-orange-600" />
+              <User className="h-5 w-5 mb-2 text-[#6BADA0]" />
               <div className="text-left">
                 <div className="font-medium">Update Profile</div>
                 <div className="text-xs text-gray-500">Edit business info</div>
@@ -192,12 +219,14 @@ const DashboardHome = () => {
             <Button
               variant="outline"
               className="h-auto p-4 flex flex-col items-start"
-              onClick={() => router.push('/dashboard/properties')}
+              onClick={() => router.push("/dashboard/properties")}
             >
-              <Building2 className="h-5 w-5 mb-2 text-orange-600" />
+              <Building2 className="h-5 w-5 mb-2 text-[#6BADA0]" />
               <div className="text-left">
                 <div className="font-medium">Manage Properties</div>
-                <div className="text-xs text-gray-500">Edit existing venues</div>
+                <div className="text-xs text-gray-500">
+                  Edit existing venues
+                </div>
               </div>
             </Button>
           </div>

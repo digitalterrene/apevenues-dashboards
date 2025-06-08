@@ -212,7 +212,7 @@ const Bookings = () => {
             <CardTitle className="text-sm font-medium">
               Total Requests
             </CardTitle>
-            <Calendar className="h-4 w-4 text-orange-600" />
+            <Calendar className="h-4 w-4 text-[#6BADA0]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{statusCounts?.total}</div>

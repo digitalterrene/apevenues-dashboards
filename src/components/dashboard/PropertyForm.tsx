@@ -1,46 +1,51 @@
-
-import React, { useState, useEffect } from 'react';
-import {   useParams } from 'react-router-dom';
-import { useProperties } from '../../hooks/useProperties';
-import { Property } from '../../types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, X } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useProperties } from "../../hooks/useProperties";
+import { Property } from "../../types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { ArrowLeft, Plus, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const PropertyForm = () => {
-  const id= useSearchParams().get('id');
+  const id = useSearchParams().get("id");
   const isEditing = Boolean(id);
   const { properties, addProperty, updateProperty } = useProperties();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'restaurant' as Property['type'],
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    description: '',
-    capacity: '',
-    priceRange: 'moderate' as Property['priceRange'],
+    name: "",
+    type: "restaurant" as Property["type"],
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    description: "",
+    capacity: "",
+    priceRange: "moderate" as Property["priceRange"],
     amenities: [] as string[],
     images: [] as string[],
     isActive: true,
   });
 
-  const [newAmenity, setNewAmenity] = useState('');
+  const [newAmenity, setNewAmenity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isEditing && id) {
-      const property = properties.find(p => p.id === id);
+      const property = properties.find((p) => p.id === id);
       if (property) {
         setFormData({
           name: property.name,
@@ -60,28 +65,32 @@ const PropertyForm = () => {
     }
   }, [isEditing, id, properties]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleAddAmenity = () => {
     if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        amenities: [...prev.amenities, newAmenity.trim()]
+        amenities: [...prev.amenities, newAmenity.trim()],
       }));
-      setNewAmenity('');
+      setNewAmenity("");
     }
   };
 
   const handleRemoveAmenity = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      amenities: prev.amenities.filter((_, i) => i !== index)
+      amenities: prev.amenities.filter((_, i) => i !== index),
     }));
   };
 
@@ -109,7 +118,7 @@ const PropertyForm = () => {
         });
       }
 
-      router.push('/dashboard/properties');
+      router.push("/dashboard/properties");
     } catch (error) {
       toast({
         title: "Error",
@@ -122,27 +131,27 @@ const PropertyForm = () => {
   };
 
   const propertyTypes = [
-    { value: 'restaurant', label: 'Restaurant' },
-    { value: 'bar', label: 'Bar' },
-    { value: 'cafe', label: 'Cafe' },
-    { value: 'club', label: 'Club' },
-    { value: 'hotel', label: 'Hotel' },
-    { value: 'other', label: 'Other' },
+    { value: "restaurant", label: "Restaurant" },
+    { value: "bar", label: "Bar" },
+    { value: "cafe", label: "Cafe" },
+    { value: "club", label: "Club" },
+    { value: "hotel", label: "Hotel" },
+    { value: "other", label: "Other" },
   ];
 
   const priceRanges = [
-    { value: 'budget', label: 'Budget (R)' },
-    { value: 'moderate', label: 'Moderate (RR)' },
-    { value: 'upscale', label: 'Upscale (RRR)' },
-    { value: 'luxury', label: 'Luxury (RRRR)' },
+    { value: "budget", label: "Budget (R)" },
+    { value: "moderate", label: "Moderate (RR)" },
+    { value: "upscale", label: "Upscale (RRR)" },
+    { value: "luxury", label: "Luxury (RRRR)" },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          onClick={() => router.push('/dashboard/properties')}
+        <Button
+          variant="outline"
+          onClick={() => router.push("/dashboard/properties")}
           size="sm"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -150,10 +159,12 @@ const PropertyForm = () => {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {isEditing ? 'Edit Property' : 'Add New Property'}
+            {isEditing ? "Edit Property" : "Add New Property"}
           </h1>
           <p className="text-gray-600">
-            {isEditing ? 'Update your property details' : 'Create a new venue listing'}
+            {isEditing
+              ? "Update your property details"
+              : "Create a new venue listing"}
           </p>
         </div>
       </div>
@@ -163,7 +174,9 @@ const PropertyForm = () => {
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
-            <CardDescription>Enter the basic details about your property</CardDescription>
+            <CardDescription>
+              Enter the basic details about your property
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,7 +201,7 @@ const PropertyForm = () => {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                   required
                 >
-                  {propertyTypes.map(type => (
+                  {propertyTypes.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
                     </option>
@@ -234,7 +247,7 @@ const PropertyForm = () => {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                   required
                 >
-                  {priceRanges.map(range => (
+                  {priceRanges.map((range) => (
                     <option key={range.value} value={range.value}>
                       {range.label}
                     </option>
@@ -305,7 +318,9 @@ const PropertyForm = () => {
         <Card>
           <CardHeader>
             <CardTitle>Amenities</CardTitle>
-            <CardDescription>What amenities does your property offer?</CardDescription>
+            <CardDescription>
+              What amenities does your property offer?
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
@@ -313,17 +328,27 @@ const PropertyForm = () => {
                 placeholder="Add an amenity (e.g., WiFi, Parking, etc.)"
                 value={newAmenity}
                 onChange={(e) => setNewAmenity(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAmenity())}
+                onKeyPress={(e) =>
+                  e.key === "Enter" && (e.preventDefault(), handleAddAmenity())
+                }
               />
-              <Button type="button" onClick={handleAddAmenity} variant="outline">
+              <Button
+                type="button"
+                onClick={handleAddAmenity}
+                variant="outline"
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-            
+
             {formData.amenities.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {formData.amenities.map((amenity, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="flex items-center gap-1"
+                  >
                     {amenity}
                     <button
                       type="button"
@@ -349,12 +374,16 @@ const PropertyForm = () => {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="isActive">Active Listing</Label>
-                <p className="text-sm text-gray-600">Make this property visible to customers</p>
+                <p className="text-sm text-gray-600">
+                  Make this property visible to customers
+                </p>
               </div>
               <Switch
                 id="isActive"
                 checked={formData.isActive}
-                onCheckedChange={(checked:boolean) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                onCheckedChange={(checked: boolean) =>
+                  setFormData((prev) => ({ ...prev, isActive: checked }))
+                }
               />
             </div>
           </CardContent>
@@ -365,16 +394,20 @@ const PropertyForm = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push('/dashboard/properties')}
+            onClick={() => router.push("/dashboard/properties")}
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            className="bg-orange-600 hover:bg-orange-700"
+          <Button
+            type="submit"
+            className="bg-[#6BADA0] hover:bg-[#8E9196]"
             disabled={isLoading}
           >
-            {isLoading ? 'Saving...' : (isEditing ? 'Update Property' : 'Add Property')}
+            {isLoading
+              ? "Saving..."
+              : isEditing
+              ? "Update Property"
+              : "Add Property"}
           </Button>
         </div>
       </form>

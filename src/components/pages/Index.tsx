@@ -50,7 +50,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#F1F0FB] to-white">
       {/* Header */}
       <Header />
       {/* Hero Section */}
@@ -58,7 +58,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             Connect Venues with
-            <span className="text-orange-600"> Perfect Events</span>
+            <span className="text-[#6BADA0]"> Perfect Events</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Whether you're a venue owner looking to reach more customers or an
@@ -69,7 +69,7 @@ const Index = () => {
             <Button
               onClick={() => router.push("/listings")}
               size="lg"
-              className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-3"
+              className="bg-[#6BADA0] cursor-pointer hover:bg-[#6BADA0]/60 hover:text-black text-lg px-8 py-3"
             >
               <Search className="h-5 w-5 mr-2" />
               Find Venues
@@ -79,7 +79,7 @@ const Index = () => {
               onClick={() => router.push("/signup")}
               size="lg"
               variant="outline"
-              className="border-orange-600 text-orange-600 hover:bg-orange-50 text-lg px-8 py-3"
+              className="border-[#6BADA0] cursor-pointer text-[#6BADA0] hover:text-white hover:bg-[#6BADA0] text-lg px-8 py-3"
             >
               <Building2 className="h-5 w-5 mr-2" />
               List Your Venue
@@ -110,8 +110,8 @@ const Index = () => {
                   className="text-center hover:shadow-lg transition-shadow"
                 >
                   <CardHeader>
-                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <Icon className="h-6 w-6 text-orange-600" />
+                    <div className="w-12 h-12 bg-[#F1F0FB] rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <Icon className="h-6 w-6 text-[#6BADA0]" />
                     </div>
                     <CardTitle className="text-xl">{feature.title}</CardTitle>
                   </CardHeader>
@@ -128,12 +128,12 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-orange-600">
+      <section className="py-20 bg-[#6BADA0]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Ready to Get Started?
           </h2>
-          <p className="text-xl text-orange-100 mb-8">
+          <p className="text-xl text-[#F1F0FB] mb-8">
             Join thousands of venue owners who trust APE Dashboard to grow their
             business
           </p>
@@ -142,7 +142,7 @@ const Index = () => {
               onClick={() => router.push("/signup")}
               size="lg"
               variant="secondary"
-              className="bg-white text-orange-600 hover:bg-gray-50 text-lg px-8 py-3"
+              className="bg-white cursor-pointer text-[#6BADA0] hover:bg-gray-50 text-lg px-8 py-3"
             >
               Start Free Trial
             </Button>
@@ -150,7 +150,7 @@ const Index = () => {
               onClick={() => router.push("/listings")}
               size="lg"
               variant="outline"
-              className="border-white hover:text-white hover:bg-orange-700 text-lg px-8 py-3"
+              className="border-white cursor-pointer hover:text-white hover:bg-[#8E9196] text-lg px-8 py-3"
             >
               Browse Venues
             </Button>

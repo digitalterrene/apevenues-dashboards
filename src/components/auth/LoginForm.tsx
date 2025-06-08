@@ -14,6 +14,7 @@ import {
 // import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -50,8 +51,10 @@ const LoginForm = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-orange-600">
-            APE Dashboard
+          <CardTitle className="text-2xl font-bold text-[#6BADA0]">
+            <Link className="" href={"/"}>
+              APE Dashboard
+            </Link>
           </CardTitle>
           <CardDescription>Sign in to your business dashboard</CardDescription>
         </CardHeader>
@@ -81,7 +84,7 @@ const LoginForm = () => {
             </div>
             <Button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700"
+              className="w-full cursor-pointer bg-[#6BADA0] hover:bg-[#8E9196]"
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Sign In"}
@@ -90,7 +93,7 @@ const LoginForm = () => {
           <div className="mt-4 text-center">
             <button
               onClick={() => router.push("/signup")}
-              className="text-orange-600 hover:text-orange-700 text-sm"
+              className="text-[#6BADA0]  cursor-pointer hover:text-black text-sm"
             >
               Don't have an account? Sign up
             </button>

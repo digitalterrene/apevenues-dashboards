@@ -203,7 +203,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="  bg-orange-600  text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+              <div className="  bg-[#6BADA0]  text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 APE
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -232,7 +232,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       onClick={() => router.push(item.path)}
                       className={`flex items-center space-x-3 w-full px-3 py-2 rounded-md transition-colors ${
                         isActive(item.path)
-                          ? "bg-orange-100 text-orange-600"
+                          ? "bg-[#F1F0FB] text-[#6BADA0]"
                           : "text-gray-600 hover:bg-gray-100"
                       }`}
                     >

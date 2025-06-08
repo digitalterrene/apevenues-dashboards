@@ -128,7 +128,7 @@ const PublicListings = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6BADA0] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading venues...</p>
         </div>
       </div>
@@ -146,7 +146,7 @@ const PublicListings = () => {
           <p className="text-gray-600 mb-4">{error}</p>
           <Button
             onClick={() => window.location.reload()}
-            className="bg-orange-600 hover:bg-orange-700"
+            className="bg-[#6BADA0] hover:bg-[#8E9196]"
           >
             Try Again
           </Button>
@@ -278,7 +278,7 @@ const PublicListings = () => {
                 </div>
                 <Button
                   onClick={() => handleBooking(property)}
-                  className="w-full bg-orange-600 hover:bg-orange-700"
+                  className="w-full bg-[#6BADA0] hover:bg-[#8E9196]"
                 >
                   Book Now
                 </Button>

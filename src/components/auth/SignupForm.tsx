@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
@@ -76,8 +77,10 @@ const SignupForm = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-orange-600">
-            APE Dashboard
+          <CardTitle className="text-2xl font-bold text-[#6BADA0]">
+            <Link className="" href={"/"}>
+              APE Dashboard
+            </Link>
           </CardTitle>
           <CardDescription>Create your business account</CardDescription>
         </CardHeader>
@@ -166,7 +169,7 @@ const SignupForm = () => {
             </div>
             <Button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700"
+              className="w-full  cursor-pointer bg-[#6BADA0] hover:bg-[#8E9196]"
               disabled={isLoading}
             >
               {isLoading ? "Creating account..." : "Create Account"}
@@ -175,7 +178,7 @@ const SignupForm = () => {
           <div className="mt-4 text-center">
             <button
               onClick={() => router.push("/login")}
-              className="text-orange-600 hover:text-orange-700 text-sm"
+              className="text-[#6BADA0] hover:text-black  cursor-pointer text-sm"
             >
               Already have an account? Sign in
             </button>

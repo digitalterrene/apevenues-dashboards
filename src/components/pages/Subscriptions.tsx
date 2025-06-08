@@ -1,100 +1,100 @@
-
-'use client'
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Check, CreditCard, Star, Zap } from 'lucide-react';
-import PaymentMethodsModal from '../subscriptions/PaymentMethodsModal';
+"use client";
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Check, CreditCard, Star, Zap } from "lucide-react";
+import PaymentMethodsModal from "../subscriptions/PaymentMethodsModal";
 
 const Subscriptions = () => {
-  const [currentPlan, setCurrentPlan] = useState('free');
+  const [currentPlan, setCurrentPlan] = useState("free");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState("");
 
   const plans = [
     {
-      id: 'free',
-      name: 'Free',
+      id: "free",
+      name: "Free",
       price: 0,
-      period: 'forever',
-      description: 'Perfect for getting started',
+      period: "forever",
+      description: "Perfect for getting started",
       features: [
-        'Up to 2 property listings',
-        'Basic analytics',
-        'Email support',
-        'Standard booking management'
+        "Up to 2 property listings",
+        "Basic analytics",
+        "Email support",
+        "Standard booking management",
       ],
       limitations: [
-        'Limited to 2 properties',
-        'Basic features only',
-        'No priority support'
+        "Limited to 2 properties",
+        "Basic features only",
+        "No priority support",
       ],
-      popular: false
+      popular: false,
     },
     {
-      id: 'starter',
-      name: 'Starter',
+      id: "starter",
+      name: "Starter",
       price: 29,
-      period: 'month',
-      description: 'Great for small businesses',
+      period: "month",
+      description: "Great for small businesses",
       features: [
-        'Up to 10 property listings',
-        'Advanced analytics',
-        'Priority email support',
-        'Custom booking forms',
-        'Photo gallery (up to 20 photos per property)',
-        'Basic SEO optimization'
+        "Up to 10 property listings",
+        "Advanced analytics",
+        "Priority email support",
+        "Custom booking forms",
+        "Photo gallery (up to 20 photos per property)",
+        "Basic SEO optimization",
       ],
-      limitations: [
-        'Limited to 10 properties',
-        'Basic customization'
-      ],
-      popular: false
+      limitations: ["Limited to 10 properties", "Basic customization"],
+      popular: false,
     },
     {
-      id: 'professional',
-      name: 'Professional',
+      id: "professional",
+      name: "Professional",
       price: 79,
-      period: 'month',
-      description: 'Perfect for growing businesses',
+      period: "month",
+      description: "Perfect for growing businesses",
       features: [
-        'Up to 50 property listings',
-        'Advanced analytics & reporting',
-        'Phone & email support',
-        'Custom branding',
-        'Unlimited photos',
-        'Advanced SEO optimization',
-        'Integration with calendar systems',
-        'Automated booking confirmations',
-        'Customer review management'
+        "Up to 50 property listings",
+        "Advanced analytics & reporting",
+        "Phone & email support",
+        "Custom branding",
+        "Unlimited photos",
+        "Advanced SEO optimization",
+        "Integration with calendar systems",
+        "Automated booking confirmations",
+        "Customer review management",
       ],
-      limitations: [
-        'Limited to 50 properties'
-      ],
-      popular: true
+      limitations: ["Limited to 50 properties"],
+      popular: true,
     },
     {
-      id: 'enterprise',
-      name: 'Enterprise',
+      id: "enterprise",
+      name: "Enterprise",
       price: 199,
-      period: 'month',
-      description: 'For large organizations',
+      period: "month",
+      description: "For large organizations",
       features: [
-        'Unlimited property listings',
-        'Custom analytics dashboard',
-        'Dedicated account manager',
-        'White-label solution',
-        'API access',
-        'Advanced integrations',
-        'Custom reporting',
-        '24/7 phone support',
-        'Multi-location management',
-        'Advanced user permissions'
+        "Unlimited property listings",
+        "Custom analytics dashboard",
+        "Dedicated account manager",
+        "White-label solution",
+        "API access",
+        "Advanced integrations",
+        "Custom reporting",
+        "24/7 phone support",
+        "Multi-location management",
+        "Advanced user permissions",
       ],
       limitations: [],
-      popular: false
-    }
+      popular: false,
+    },
   ];
 
   const handleUpgrade = (planId: string) => {
@@ -105,21 +105,23 @@ const Subscriptions = () => {
   const handlePlanChange = (planId: string) => {
     setCurrentPlan(planId);
     // In a real app, this would make an API call to update the subscription
-    localStorage.setItem('apevenues_current_plan', planId);
+    localStorage.setItem("apevenues_current_plan", planId);
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Subscription Plans</h1>
-        <p className="text-gray-600">Choose the perfect plan for your business needs</p>
+        <p className="text-gray-600">
+          Choose the perfect plan for your business needs
+        </p>
       </div>
 
       {/* Current Plan Status */}
       <Card className="border-orange-200 bg-orange-50">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Star className="h-5 w-5 text-orange-600" />
+            <Star className="h-5 w-5 text-[#6BADA0]" />
             <span>Current Plan</span>
           </CardTitle>
         </CardHeader>
@@ -127,16 +129,18 @@ const Subscriptions = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-lg font-semibold text-gray-900">
-                {plans.find(p => p.id === currentPlan)?.name} Plan
+                {plans.find((p) => p.id === currentPlan)?.name} Plan
               </p>
               <p className="text-gray-600">
-                {currentPlan === 'free' ? 'Free forever' : `R${plans.find(p => p.id === currentPlan)?.price}/month`}
+                {currentPlan === "free"
+                  ? "Free forever"
+                  : `R${plans.find((p) => p.id === currentPlan)?.price}/month`}
               </p>
             </div>
             <Button
               onClick={() => setShowPaymentModal(true)}
               variant="outline"
-              className="border-orange-600 text-orange-600 hover:bg-orange-50"
+              className="border-[#6BADA0] text-[#6BADA0] hover:bg-orange-50"
             >
               <CreditCard className="h-4 w-4 mr-2" />
               Manage Payment
@@ -148,25 +152,25 @@ const Subscriptions = () => {
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {plans.map((plan) => (
-          <Card 
-            key={plan.id} 
+          <Card
+            key={plan.id}
             className={`relative ${
-              plan.popular 
-                ? 'border-orange-600 shadow-lg scale-105' 
-                : currentPlan === plan.id 
-                  ? 'border-green-600 bg-green-50' 
-                  : ''
+              plan.popular
+                ? "border-[#6BADA0] shadow-lg scale-105"
+                : currentPlan === plan.id
+                ? "border-green-600 bg-green-50"
+                : ""
             }`}
           >
             {plan.popular && (
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-orange-600 text-white">
+                <Badge className="bg-[#6BADA0] text-white">
                   <Zap className="h-3 w-3 mr-1" />
                   Most Popular
                 </Badge>
               </div>
             )}
-            
+
             {currentPlan === plan.id && (
               <div className="absolute -top-3 right-3">
                 <Badge className="bg-green-600 text-white">Current</Badge>
@@ -195,7 +199,9 @@ const Subscriptions = () => {
 
               {plan.limitations.length > 0 && (
                 <div className="space-y-2 pt-2 border-t">
-                  <h4 className="font-medium text-sm text-gray-600">Limitations:</h4>
+                  <h4 className="font-medium text-sm text-gray-600">
+                    Limitations:
+                  </h4>
                   {plan.limitations.map((limitation, index) => (
                     <div key={index} className="text-sm text-gray-500">
                       • {limitation}
@@ -209,14 +215,20 @@ const Subscriptions = () => {
                 disabled={currentPlan === plan.id}
                 className={`w-full mt-4 ${
                   plan.popular
-                    ? 'bg-orange-600 hover:bg-orange-700'
+                    ? "bg-[#6BADA0] hover:bg-[#8E9196]"
                     : currentPlan === plan.id
-                      ? 'bg-green-600'
-                      : ''
+                    ? "bg-green-600"
+                    : ""
                 }`}
-                variant={currentPlan === plan.id ? 'default' : plan.popular ? 'default' : 'outline'}
+                variant={
+                  currentPlan === plan.id
+                    ? "default"
+                    : plan.popular
+                    ? "default"
+                    : "outline"
+                }
               >
-                {currentPlan === plan.id ? 'Current Plan' : 'Choose Plan'}
+                {currentPlan === plan.id ? "Current Plan" : "Choose Plan"}
               </Button>
             </CardContent>
           </Card>
@@ -227,7 +239,9 @@ const Subscriptions = () => {
       <Card>
         <CardHeader>
           <CardTitle>Billing Information</CardTitle>
-          <CardDescription>Manage your payment methods and billing details</CardDescription>
+          <CardDescription>
+            Manage your payment methods and billing details
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -241,8 +255,8 @@ const Subscriptions = () => {
               </div>
               <Badge variant="secondary">Default</Badge>
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowPaymentModal(true)}
               className="w-full"
             >

@@ -1,3 +1,4 @@
+"use client";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import React from "react";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -15,11 +16,15 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 export default function Dashboard_Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const link = pathname?.replaceAll("/dashboard", "") || "#";
   return (
     <>
       <ProtectedRoute>
@@ -36,13 +41,15 @@ export default function Dashboard_Layout({
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">
-                        Building Your Application
-                      </BreadcrumbLink>
+                      <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator className="hidden md:block" />
                     <BreadcrumbItem>
-                      <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                      <BreadcrumbPage className="capitalize">
+                        <Link href={link}>
+                          {pathname?.replaceAll("/dashboard/", "")}
+                        </Link>
+                      </BreadcrumbPage>
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>

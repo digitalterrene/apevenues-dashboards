@@ -401,7 +401,7 @@ const PropertyEditForm = ({ id }: { id: string }) => {
           </Button>
           <Button
             type="submit"
-            className="bg-orange-600 hover:bg-orange-700"
+            className="bg-[#6BADA0] hover:bg-[#8E9196]"
             disabled={isLoading}
           >
             {isLoading ? "Updating..." : "Update Property"}
