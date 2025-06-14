@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     const newProperty: any = {
       ...propertyData,
-      businessId: decoded.userId,
+      user_id: decoded.userId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -63,16 +63,18 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const fetchMyProperties = searchParams.get("userId");
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value;
-
+    const decoded = jwt.verify(`${token}`, process.env.JWT_SECRET!) as {
+      userId: string;
+    };
     const client = await MongoClient.connect(process.env.MONGODB_URI!);
     const db = client.db();
-
+    const userId = decoded?.userId;
     let query = {};
-    if (userId) {
-      query = { businessId: userId };
+    if (fetchMyProperties) {
+      query = { user_id: userId };
     }
 
     const properties = await db

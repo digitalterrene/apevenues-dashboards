@@ -97,7 +97,7 @@ const PropertiesList = () => {
         </div>
         <Button
           onClick={() => router.push("/dashboard/properties/new")}
-          className="bg-[#6BADA0] hover:bg-[#8E9196]"
+          className="bg-[#6BADA0]  cursor-pointer hover:bg-[#8E9196]"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Property
@@ -157,7 +157,7 @@ const PropertiesList = () => {
             {!searchTerm && filterType === "all" && (
               <Button
                 onClick={() => router.push("/dashboard/properties/new")}
-                className="bg-[#6BADA0] hover:bg-[#8E9196]"
+                className="bg-[#6BADA0]  cursor-pointer hover:bg-[#8E9196]"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Property

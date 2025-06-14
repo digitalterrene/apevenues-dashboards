@@ -200,15 +200,7 @@ const PropertyForm = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          onClick={() => router.push("/dashboard/properties")}
-          size="sm"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Properties
-        </Button>
+      <div className="flex w-full justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {isEditing ? "Edit Property" : "Add New Property"}
@@ -219,6 +211,15 @@ const PropertyForm = () => {
               : "Create a new venue listing"}
           </p>
         </div>
+        <Button
+          variant="outline"
+          className="cursor-pointer"
+          onClick={() => router.push("/dashboard/properties")}
+          size="sm"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Properties
+        </Button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -268,6 +269,9 @@ const PropertyForm = () => {
                     <Command className="w-full">
                       <CommandInput placeholder="Search property type..." />
                       <CommandList className="w-full">
+                        <CardTitle className="text-sm p-3">
+                          Types of properties that can host events
+                        </CardTitle>
                         <CommandEmpty>No type found.</CommandEmpty>
                         <CommandGroup className="w-full">
                           {propertyTypes.map((type) => (
@@ -528,7 +532,7 @@ const PropertyForm = () => {
           </Button>
           <Button
             type="submit"
-            className="bg-[#6BADA0] hover:bg-[#8E9196]"
+            className="bg-[#6BADA0]  cursor-pointer hover:bg-[#8E9196]"
             disabled={isLoading}
           >
             {isLoading

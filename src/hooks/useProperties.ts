@@ -19,7 +19,7 @@ export const useProperties = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/properties?businessId=${user.id}`);
+      const response = await fetch(`/api/properties?userId=${user.id}`);
       const data = await response.json();
 
       if (response.ok) {

@@ -74,7 +74,7 @@ const DashboardHome = () => {
         </div>
         <Button
           onClick={() => router.push("/dashboard/properties/new")}
-          className="bg-[#6BADA0] hover:bg-[#8E9196]"
+          className="bg-[#6BADA0]  cursor-pointer hover:bg-[#8E9196]"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Property
@@ -114,6 +114,7 @@ const DashboardHome = () => {
             </div>
             <Button
               variant="outline"
+              className="cursor-pointer"
               onClick={() => router.push("/dashboard/properties")}
             >
               View All
@@ -132,7 +133,7 @@ const DashboardHome = () => {
               </p>
               <Button
                 onClick={() => router.push("/dashboard/properties/new")}
-                className="bg-[#6BADA0] hover:bg-[#8E9196]"
+                className="bg-[#6BADA0] cursor-pointer hover:bg-[#8E9196]"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Property
@@ -172,6 +173,7 @@ const DashboardHome = () => {
                   </div>
                   <Button
                     variant="outline"
+                    className="cursor-pointer"
                     size="sm"
                     onClick={() =>
                       router.push(`/dashboard/properties/${property.id}/edit`)
@@ -196,7 +198,7 @@ const DashboardHome = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button
               variant="outline"
-              className="h-auto p-4 flex flex-col items-start"
+              className="h-auto p-4 flex cursor-pointer flex-col items-start"
               onClick={() => router.push("/dashboard/properties/new")}
             >
               <Plus className="h-5 w-5 mb-2 text-[#6BADA0]" />
@@ -207,7 +209,7 @@ const DashboardHome = () => {
             </Button>
             <Button
               variant="outline"
-              className="h-auto p-4 flex flex-col items-start"
+              className="h-auto p-4  cursor-pointer flex flex-col items-start"
               onClick={() => router.push("/dashboard/profile")}
             >
               <User className="h-5 w-5 mb-2 text-[#6BADA0]" />
@@ -218,7 +220,7 @@ const DashboardHome = () => {
             </Button>
             <Button
               variant="outline"
-              className="h-auto p-4 flex flex-col items-start"
+              className="h-auto p-4  cursor-pointer flex flex-col items-start"
               onClick={() => router.push("/dashboard/properties")}
             >
               <Building2 className="h-5 w-5 mb-2 text-[#6BADA0]" />

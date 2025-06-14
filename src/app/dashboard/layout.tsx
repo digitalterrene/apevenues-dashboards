@@ -17,14 +17,48 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+
 export default function Dashboard_Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const link = pathname?.replaceAll("/dashboard", "") || "#";
+
+  // Function to generate breadcrumbs from pathname
+  const generateBreadcrumbs = () => {
+    if (!pathname) return [];
+
+    // Remove /dashboard prefix and split into segments
+    const segments = pathname
+      .replace(/^\/dashboard/, "")
+      .split("/")
+      .filter(Boolean);
+
+    // Filter out numeric segments and empty strings
+    const filteredSegments = segments.filter(
+      (segment) => !/^\d+$/.test(segment)
+    );
+
+    // Generate breadcrumb items
+    let accumulatedPath = "/dashboard";
+    return filteredSegments.map((segment, index) => {
+      accumulatedPath += `/${segment}`;
+      const isLast = index === filteredSegments.length - 1;
+      const displayName = segment
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+
+      return {
+        name: displayName,
+        path: accumulatedPath,
+        isLast,
+      };
+    });
+  };
+
+  const breadcrumbs = generateBreadcrumbs();
+
   return (
     <>
       <ProtectedRoute>
@@ -40,23 +74,36 @@ export default function Dashboard_Layout({
                 />
                 <Breadcrumb>
                   <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
                     <BreadcrumbItem>
-                      <BreadcrumbPage className="capitalize">
-                        <Link href={link}>
-                          {pathname?.replaceAll("/dashboard/", "")}
-                        </Link>
-                      </BreadcrumbPage>
+                      <BreadcrumbLink href="/dashboard">
+                        Dashboard
+                      </BreadcrumbLink>
                     </BreadcrumbItem>
+                    {breadcrumbs.map((crumb, index) => (
+                      <React.Fragment key={index}>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          {crumb.isLast ? (
+                            <BreadcrumbPage className="capitalize">
+                              {crumb.name}
+                            </BreadcrumbPage>
+                          ) : (
+                            <BreadcrumbLink
+                              href={crumb.path}
+                              className="capitalize"
+                            >
+                              {crumb.name}
+                            </BreadcrumbLink>
+                          )}
+                        </BreadcrumbItem>
+                      </React.Fragment>
+                    ))}
                   </BreadcrumbList>
                 </Breadcrumb>
               </div>
             </header>
             <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-              {children}{" "}
+              {children}
             </div>
           </SidebarInset>
         </SidebarProvider>

@@ -40,6 +40,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import Link from "next/link";
 // This is sample data.
 const data = {
   user: {
@@ -199,20 +200,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="  bg-[#6BADA0]  text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                APE
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
-                  Amalgamated Properties & Events
-                </span>
-                <span className="truncate text-xs">Business Dashboard</span>
-              </div>
-            </SidebarMenuButton>
+            <Link href="/" className="">
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent cursor-pointer data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <div className="  bg-[#6BADA0]  text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  APE
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">
+                    Amalgamated Properties & Events
+                  </span>
+                  <span className="truncate text-xs">Business Dashboard</span>
+                </div>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

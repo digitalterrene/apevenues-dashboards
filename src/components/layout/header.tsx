@@ -8,7 +8,6 @@ import Link from "next/link";
 
 export default function Header() {
   const router = useRouter();
-  const pathname = usePathname();
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 py-4">
@@ -18,18 +17,7 @@ export default function Header() {
               <span className="text-3xl font-serif font-bold">
                 A<span className="text-[#6BADA0]">P</span>E
               </span>
-            </Link>{" "}
-            {/* <Link
-              href={"/"}
-              className="w-10 h-10  rounded-lg flex items-center justify-center"
-            >
-              <img src="/logo.svg" className="text-white font-bold text-xl" />
-            </Link> */}
-            {/* <h1 className="text-2xl font-bold text-[#6BADA0]">
-              {pathname !== "/listings"
-                ? "Dashboard"
-                : "Amalgamated Properties & Events"}
-            </h1> */}
+            </Link>
           </div>
           <div className="flex items-center space-x-4">
             <Button
