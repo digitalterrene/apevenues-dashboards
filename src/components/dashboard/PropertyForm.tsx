@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FileUploader } from "react-drag-drop-files";
+import { ImagePlus, Trash2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -64,6 +66,7 @@ const PropertyForm = () => {
     zipCode: "",
     province: "",
   });
+  // Update your useEffect for editing mode to initialize imagePreviews
   useEffect(() => {
     if (isEditing && id) {
       const property = properties.find((p) => p.id === id);
@@ -83,6 +86,8 @@ const PropertyForm = () => {
           isActive: property.isActive,
           user_id: user?.id || (user?._id as string),
         });
+        // Initialize imagePreviews with existing images
+        setImagePreviews(property.images);
       }
     }
   }, [isEditing, id, properties]);
@@ -197,6 +202,102 @@ const PropertyForm = () => {
     acc[amenity.category].push(amenity);
     return acc;
   }, {} as Record<string, Amenity[]>);
+  // Add these constants
+  const fileTypes = ["JPG", "PNG", "GIF", "JPEG", "WEBP"];
+  const MAX_IMAGES = 10;
+
+  // Add this state to your component
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  // Add these functions to handle image uploads
+  const handleImageChange = async (files: FileList) => {
+    if (formData.images.length + files.length > MAX_IMAGES) {
+      toast.error(`Maximum ${MAX_IMAGES} images allowed`);
+      return;
+    }
+
+    setUploadingImages(true);
+
+    try {
+      const uploadPromises = Array.from(files).map((file) =>
+        handleUploadImage(file, "property")
+      );
+
+      const results = await Promise.all(uploadPromises);
+      const newImageUrls = results.filter(
+        (url) => url !== undefined
+      ) as string[];
+
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newImageUrls],
+      }));
+
+      // Generate previews for new images
+      const newPreviews = await Promise.all(
+        Array.from(files).map((file) => createImagePreview(file))
+      );
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      toast.error("Error uploading some images");
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const createImagePreview = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Update your handleUploadImage function
+  const handleUploadImage = async (
+    image: File | Blob,
+    imageType: string
+  ): Promise<string | undefined> => {
+    const toastId = toast.loading("Uploading image...");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", image);
+
+      const res = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Check for both possible response formats
+        const imageUrl = data.secure_url || data.imgUrl;
+        if (imageUrl) {
+          toast.success("Image uploaded successfully", { id: toastId });
+          return imageUrl;
+        }
+        throw new Error("No image URL returned");
+      } else {
+        throw new Error(data.error?.message || "Failed to upload image");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed", { id: toastId });
+      console.error("Upload error:", error);
+      return undefined;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -363,6 +464,68 @@ const PropertyForm = () => {
                   ))}
                 </select>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Property Images</CardTitle>
+            <CardDescription>
+              Upload high-quality images of your property (max {MAX_IMAGES})
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {/* Existing image previews */}
+              {formData.images.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={imagePreviews[index] || image}
+                    alt={`Property image ${index + 1}`}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute cursor-pointer  top-2 right-2 bg-red-500 text-white p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Upload area */}
+              {formData.images.length < MAX_IMAGES && (
+                <FileUploader
+                  multiple={true}
+                  handleChange={handleImageChange}
+                  name="file"
+                  types={fileTypes}
+                  disabled={uploadingImages}
+                >
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors p-4">
+                    {uploadingImages ? (
+                      <div className="text-center">
+                        <p>Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <ImagePlus className="mx-auto h-10 w-10 text-gray-400" />
+                        <p className="mt-2 text-sm text-gray-600">
+                          Drag & drop images here
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          or click to browse files
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          JPG, PNG, GIF, WEBP (max{" "}
+                          {MAX_IMAGES - formData.images.length} more)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </FileUploader>
+              )}
             </div>
           </CardContent>
         </Card>

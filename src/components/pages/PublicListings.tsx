@@ -81,18 +81,18 @@ const PublicListings = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (property) =>
-          property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          property.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          property.address.toLowerCase().includes(searchTerm.toLowerCase())
+          property?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          property?.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          property?.address.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (selectedType !== "all") {
-      filtered = filtered.filter((property) => property.type === selectedType);
+      filtered = filtered.filter((property) => property?.type === selectedType);
     }
 
     if (selectedCity !== "all") {
-      filtered = filtered.filter((property) => property.city === selectedCity);
+      filtered = filtered.filter((property) => property?.city === selectedCity);
     }
 
     setFilteredProperties(filtered);
@@ -227,14 +227,14 @@ const PublicListings = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {paginatedProperties.map((property) => (
             <Card
-              key={property.id}
+              key={property?.id}
               className="overflow-hidden hover:shadow-lg transition-shadow"
             >
               <div className="aspect-video bg-gray-200 relative">
-                {property.images && property.images.length > 0 ? (
+                {property?.images && property?.images.length > 0 ? (
                   <img
-                    src={property.images[0]}
-                    alt={property.name}
+                    src={property?.images[0]}
+                    alt={property?.name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -244,36 +244,32 @@ const PublicListings = () => {
                 )}
                 <div className="absolute top-3 right-3">
                   <Badge variant="secondary" className="bg-white/90">
-                    {getPriceRangeDisplay(property.priceRange)}
+                    {getPriceRangeDisplay(property?.priceRange)}
                   </Badge>
                 </div>
               </div>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg">{property.name}</CardTitle>
+                    <CardTitle className="text-lg">{property?.name}</CardTitle>
                     <CardDescription className="flex items-center space-x-1 mt-1">
                       <MapPin className="h-4 w-4" />
                       <span>
-                        {property.city}, {property.state}
+                        {property?.city}, {property?.state}
                       </span>
                     </CardDescription>
                   </div>
-                  <Badge variant="outline">{property.type}</Badge>
+                  <Badge variant="outline">{property?.type}</Badge>
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {property.description}
+                  {property?.description}
                 </p>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-1 text-sm text-gray-600">
                     <Users className="h-4 w-4" />
-                    <span>Up to {property.capacity} guests</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm text-gray-600">4.8</span>
+                    <span>Up to {property?.capacity} guests</span>
                   </div>
                 </div>
                 <Button
