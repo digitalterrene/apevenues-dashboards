@@ -274,7 +274,7 @@ const PublicListings = () => {
                 </div>
                 <Button
                   onClick={() => handleBooking(property)}
-                  className="w-full bg-[#6BADA0] hover:bg-[#8E9196]"
+                  className="w-full cursor-pointer bg-[#6BADA0] hover:bg-[#8E9196]"
                 >
                   Book Now
                 </Button>

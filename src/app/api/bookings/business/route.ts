@@ -14,14 +14,14 @@ export async function GET(request: Request) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       userId: string;
     };
-    const businessId = decoded.userId;
+    const userId = decoded.userId;
 
     const client = await MongoClient.connect(process.env.MONGODB_URI!);
     const db = client.db();
 
     const bookings = await db
       .collection("bookings")
-      .find({ businessId })
+      .find({ user_id: userId })
       .sort({ createdAt: -1 })
       .toArray();
 

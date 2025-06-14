@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { MongoClient, ObjectId } from "mongodb";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 
 interface BookingRequest {
   propertyId: string;

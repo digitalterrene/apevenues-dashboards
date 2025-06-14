@@ -69,6 +69,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     try {
       const bookingData = {
         propertyId: property.id,
+        user_id: property?.user_id,
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
