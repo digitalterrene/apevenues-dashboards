@@ -10,6 +10,7 @@ interface User {
   address: string;
   role?: string;
   createdAt?: string;
+  _id: string;
 }
 
 interface AuthContextType {

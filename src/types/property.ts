@@ -2,6 +2,7 @@
 import { ObjectId } from "mongodb";
 
 export interface Property {
+  province: string;
   _id?: ObjectId;
   id: string;
   businessId: string;

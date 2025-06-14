@@ -2,9 +2,10 @@ import { create } from "zustand";
 
 export const useLocationContext = create((set: any) => ({
   inputs: {
-    province: "",
+    address: "",
     city: "",
-    suburb: "",
+    zipCode: "",
+    province: "",
   },
 
   setInputs: (newInputs: any) =>

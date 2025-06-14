@@ -1,7 +1,7 @@
+"use client";
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { useProperties } from "../../hooks/useProperties";
-import { Property } from "../../types";
+import { Amenity, Property } from "../../types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,10 @@ import {
   CommandList,
 } from "../ui/command";
 import LocationSelect from "./LocationSelect";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLocationContext } from "@/contexts/LocationContext";
+import { propertyTypes } from "@/lib/data/propertyTypes";
+import { AMENITIES } from "@/lib/data/amenities";
 
 const PropertyForm = () => {
   const id = useSearchParams().get("id");
@@ -35,22 +39,23 @@ const PropertyForm = () => {
   const { properties, addProperty, updateProperty } = useProperties();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-
+  const { inputs: locationData } = useLocationContext();
   const [formData, setFormData] = useState({
     name: "",
     type: "restaurant" as Property["type"],
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
+    address: locationData?.address,
+    city: locationData?.city,
+    province: locationData?.province,
+    zipCode: locationData?.zipCode,
     description: "",
     capacity: "",
     priceRange: "moderate" as Property["priceRange"],
     amenities: [] as string[],
     images: [] as string[],
+    user_id: "",
     isActive: true,
   });
-
+  const { user } = useAuth();
   const [newAmenity, setNewAmenity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState({
@@ -68,7 +73,7 @@ const PropertyForm = () => {
           type: property.type,
           address: property.address,
           city: property.city,
-          state: property.state,
+          province: property.province,
           zipCode: property.zipCode,
           description: property.description,
           capacity: property.capacity.toString(),
@@ -76,6 +81,7 @@ const PropertyForm = () => {
           amenities: property.amenities,
           images: property.images,
           isActive: property.isActive,
+          user_id: user?.id || (user?._id as string),
         });
       }
     }
@@ -109,7 +115,6 @@ const PropertyForm = () => {
       amenities: prev.amenities.filter((_, i) => i !== index),
     }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -117,73 +122,24 @@ const PropertyForm = () => {
     try {
       const propertyData = {
         ...formData,
+        ...location,
         capacity: parseInt(formData.capacity) || 0,
       };
 
       if (isEditing && id) {
-        updateProperty(id, propertyData);
-        toast({
-          title: "Property updated",
-          description: "Your property has been successfully updated.",
-        });
+        await updateProperty(id, propertyData);
       } else {
-        addProperty(propertyData);
-        toast({
-          title: "Property added",
-          description: "Your new property has been successfully added.",
-        });
+        await addProperty(propertyData);
       }
 
-      router.push("/dashboard/properties");
+      setTimeout(() => {
+        router.push("/dashboard/properties");
+      }, 1000); // Small delay to allow toast to be seen
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
-
-  const propertyTypes = [
-    {
-      value: "restaurant",
-      label: "Restaurant",
-      description:
-        "A place to dine with full meal service, ranging from casual to fine dining.",
-    },
-    {
-      value: "bar",
-      label: "Bar",
-      description:
-        "An establishment that primarily serves alcoholic beverages and light snacks.",
-    },
-    {
-      value: "cafe",
-      label: "Cafe",
-      description:
-        "A casual spot serving coffee, light meals, and pastries, often with seating.",
-    },
-    {
-      value: "club",
-      label: "Club",
-      description:
-        "Nightlife venue with music, dancing, and often late-night entertainment.",
-    },
-    {
-      value: "hotel",
-      label: "Hotel",
-      description:
-        "Lodging establishment offering rooms, amenities, and often dining options.",
-    },
-    {
-      value: "other",
-      label: "Other",
-      description:
-        "Any other type of venue not covered by the above categories.",
-    },
-  ];
 
   const priceRanges = [
     { value: "budget", label: "Budget (R)" },
@@ -199,6 +155,49 @@ const PropertyForm = () => {
   }) => {
     setLocation(newLocation);
   };
+  // Add this constant with all amenities (before your component)
+
+  // In your PropertyForm component, replace the existing amenities code with this:
+
+  const [amenitiesOpen, setAmenitiesOpen] = useState(false);
+  const [newCustomAmenity, setNewCustomAmenity] = useState("");
+
+  const handleAmenitySelect = (amenityValue: string) => {
+    if (formData.amenities.includes(amenityValue)) {
+      setFormData((prev) => ({
+        ...prev,
+        amenities: prev.amenities.filter((a) => a !== amenityValue),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        amenities: [...prev.amenities, amenityValue],
+      }));
+    }
+  };
+
+  const handleAddCustomAmenity = () => {
+    if (
+      newCustomAmenity.trim() &&
+      !formData.amenities.includes(newCustomAmenity.trim())
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        amenities: [...prev.amenities, newCustomAmenity.trim()],
+      }));
+      setNewCustomAmenity("");
+    }
+  };
+
+  // Group amenities by category
+  const groupedAmenities = AMENITIES.reduce((acc, amenity) => {
+    if (!acc[amenity.category]) {
+      acc[amenity.category] = [];
+    }
+    acc[amenity.category].push(amenity);
+    return acc;
+  }, {} as Record<string, Amenity[]>);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -363,7 +362,6 @@ const PropertyForm = () => {
             </div>
           </CardContent>
         </Card>
-
         {/* Location */}
         <Card>
           <CardHeader>
@@ -374,7 +372,6 @@ const PropertyForm = () => {
             <LocationSelect onLocationChange={handleLocationChange} />
           </CardContent>
         </Card>
-
         {/* Amenities */}
         <Card>
           <CardHeader>
@@ -384,18 +381,80 @@ const PropertyForm = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
+            <Popover open={amenitiesOpen} onOpenChange={setAmenitiesOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={amenitiesOpen}
+                  className="w-full justify-between"
+                >
+                  Select Amenities...
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[400px] p-0">
+                <Command>
+                  <CommandInput placeholder="Search amenities..." />
+                  <CommandList>
+                    <CommandEmpty>No amenity found.</CommandEmpty>
+                    {Object.entries(groupedAmenities).map(
+                      ([category, amenities]) => (
+                        <CommandGroup key={category} heading={category}>
+                          {amenities.map((amenity) => (
+                            <CommandItem
+                              key={amenity.value}
+                              value={amenity.value}
+                              onSelect={() =>
+                                handleAmenitySelect(amenity.value)
+                              }
+                              className="w-full flex items-start gap-3 p-3"
+                            >
+                              <div className="flex-shrink-0">
+                                <Check
+                                  className={`border shadow p-1 rounded-md text-lg ${
+                                    formData.amenities.includes(amenity.value)
+                                      ? "opacity-100 bg-primary text-primary-foreground"
+                                      : "opacity-0"
+                                  }`}
+                                />
+                              </div>
+                              <img
+                                src={`/amenities/${amenity.value}.jpg`}
+                                alt={amenity.label}
+                                className="h-40 w-40 object-cover rounded-md flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold truncate">
+                                  {amenity.label}
+                                </h4>
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                  {amenity.description}
+                                </p>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            <div className="flex gap-2 mt-4">
               <Input
-                placeholder="Add an amenity (e.g., WiFi, Parking, etc.)"
-                value={newAmenity}
-                onChange={(e) => setNewAmenity(e.target.value)}
+                placeholder="Add custom amenity"
+                value={newCustomAmenity}
+                onChange={(e) => setNewCustomAmenity(e.target.value)}
                 onKeyPress={(e) =>
-                  e.key === "Enter" && (e.preventDefault(), handleAddAmenity())
+                  e.key === "Enter" &&
+                  (e.preventDefault(), handleAddCustomAmenity())
                 }
               />
               <Button
                 type="button"
-                onClick={handleAddAmenity}
+                onClick={handleAddCustomAmenity}
                 variant="outline"
               >
                 <Plus className="h-4 w-4" />
@@ -403,28 +462,37 @@ const PropertyForm = () => {
             </div>
 
             {formData.amenities.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {formData.amenities.map((amenity, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                  >
-                    {amenity}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAmenity(index)}
-                      className="ml-1 hover:text-red-600"
+              <div className="flex flex-wrap gap-2 mt-4">
+                {formData.amenities.map((amenityValue, index) => {
+                  const amenity = AMENITIES.find(
+                    (a) => a.value === amenityValue
+                  ) || {
+                    label: amenityValue,
+                    icon: "➕",
+                  };
+
+                  return (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="flex items-center gap-1"
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
+                      <span className="text-lg">{amenity.icon}</span>
+                      {amenity.label}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAmenity(index)}
+                        className="ml-1 hover:text-red-600"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
-
         {/* Settings */}
         <Card>
           <CardHeader>
@@ -449,7 +517,6 @@ const PropertyForm = () => {
             </div>
           </CardContent>
         </Card>
-
         {/* Submit */}
         <div className="flex gap-4">
           <Button
