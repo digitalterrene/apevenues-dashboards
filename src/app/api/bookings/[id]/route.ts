@@ -17,7 +17,7 @@ export async function PUT(
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       userId: string;
     };
-    const businessId = decoded.userId;
+    const user_id = decoded.userId;
 
     const { status } = await request.json();
     if (!status || !["confirmed", "rejected"].includes(status)) {
@@ -33,7 +33,7 @@ export async function PUT(
     // Verify booking belongs to business
     const existingBooking = await db.collection("bookings").findOne({
       _id: new ObjectId(params.id),
-      businessId,
+      user_id,
     });
 
     if (!existingBooking) {

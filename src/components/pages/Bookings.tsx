@@ -374,7 +374,7 @@ const Bookings = () => {
                         updateBookingStatus(booking?.id, "rejected")
                       }
                       variant="outline"
-                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                      className="flex-1 cursor-pointer border-red-200 text-red-600 hover:bg-red-50"
                     >
                       Reject
                     </Button>
@@ -382,7 +382,7 @@ const Bookings = () => {
                       onClick={() =>
                         updateBookingStatus(booking?.id, "confirmed")
                       }
-                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      className="flex-1 cursor-pointer bg-green-600 hover:bg-green-700"
                     >
                       Confirm Booking
                     </Button>

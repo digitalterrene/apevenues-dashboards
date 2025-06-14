@@ -1,15 +1,14 @@
-
 export interface Property {
   id: string;
   name: string;
-  type: 'restaurant' | 'bar' | 'cafe' | 'club' | 'hotel' | 'other';
+  type: "restaurant" | "bar" | "cafe" | "club" | "hotel" | "other";
   address: string;
   city: string;
-  state: string;
+  province: string;
   zipCode: string;
   description: string;
   capacity: number;
-  priceRange: 'budget' | 'moderate' | 'upscale' | 'luxury';
+  priceRange: "budget" | "moderate" | "upscale" | "luxury";
   amenities: string[];
   images: string[];
   isActive: boolean;
@@ -44,7 +43,7 @@ export interface BookingRequest {
   eventDate: string;
   guestCount: number;
   specialRequests: string;
-  status: 'pending' | 'confirmed' | 'rejected';
+  status: "pending" | "confirmed" | "rejected";
   createdAt: string;
 }
 
@@ -56,4 +55,11 @@ export interface PaymentMethod {
   cardholderName: string;
   isDefault: boolean;
   createdAt: string;
+}
+export interface Amenity {
+  value: string;
+  label: string;
+  category: string;
+  description: string;
+  icon: string;
 }
