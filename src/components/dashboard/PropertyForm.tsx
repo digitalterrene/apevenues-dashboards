@@ -16,14 +16,25 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronsUpDown, Plus, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
+import LocationSelect from "./LocationSelect";
 
 const PropertyForm = () => {
   const id = useSearchParams().get("id");
   const isEditing = Boolean(id);
   const { properties, addProperty, updateProperty } = useProperties();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -42,7 +53,12 @@ const PropertyForm = () => {
 
   const [newAmenity, setNewAmenity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const [location, setLocation] = useState({
+    address: "",
+    city: "",
+    zipCode: "",
+    province: "",
+  });
   useEffect(() => {
     if (isEditing && id) {
       const property = properties.find((p) => p.id === id);
@@ -131,12 +147,42 @@ const PropertyForm = () => {
   };
 
   const propertyTypes = [
-    { value: "restaurant", label: "Restaurant" },
-    { value: "bar", label: "Bar" },
-    { value: "cafe", label: "Cafe" },
-    { value: "club", label: "Club" },
-    { value: "hotel", label: "Hotel" },
-    { value: "other", label: "Other" },
+    {
+      value: "restaurant",
+      label: "Restaurant",
+      description:
+        "A place to dine with full meal service, ranging from casual to fine dining.",
+    },
+    {
+      value: "bar",
+      label: "Bar",
+      description:
+        "An establishment that primarily serves alcoholic beverages and light snacks.",
+    },
+    {
+      value: "cafe",
+      label: "Cafe",
+      description:
+        "A casual spot serving coffee, light meals, and pastries, often with seating.",
+    },
+    {
+      value: "club",
+      label: "Club",
+      description:
+        "Nightlife venue with music, dancing, and often late-night entertainment.",
+    },
+    {
+      value: "hotel",
+      label: "Hotel",
+      description:
+        "Lodging establishment offering rooms, amenities, and often dining options.",
+    },
+    {
+      value: "other",
+      label: "Other",
+      description:
+        "Any other type of venue not covered by the above categories.",
+    },
   ];
 
   const priceRanges = [
@@ -145,7 +191,14 @@ const PropertyForm = () => {
     { value: "upscale", label: "Upscale (RRR)" },
     { value: "luxury", label: "Luxury (RRRR)" },
   ];
-
+  const handleLocationChange = (newLocation: {
+    address: string;
+    city: string;
+    zipCode: string;
+    province: string;
+  }) => {
+    setLocation(newLocation);
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -191,22 +244,75 @@ const PropertyForm = () => {
                   required
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 w-full">
                 <Label htmlFor="type">Property Type *</Label>
-                <select
-                  id="type"
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                  required
-                >
-                  {propertyTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild className="w-full">
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="w-full justify-between"
+                    >
+                      {formData.type
+                        ? propertyTypes.find(
+                            (type) => type.value === formData.type
+                          )?.label
+                        : "Select property type..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[var(--radix-popover-trigger-width)] p-0"
+                    align="start"
+                  >
+                    <Command className="w-full">
+                      <CommandInput placeholder="Search property type..." />
+                      <CommandList className="w-full">
+                        <CommandEmpty>No type found.</CommandEmpty>
+                        <CommandGroup className="w-full">
+                          {propertyTypes.map((type) => (
+                            <CommandItem
+                              key={type.value}
+                              value={type.value}
+                              onSelect={() => {
+                                setFormData((prev: any) => ({
+                                  ...prev,
+                                  type: type.value,
+                                }));
+                                setOpen(false);
+                              }}
+                              className="w-full flex items-start gap-3 p-3"
+                            >
+                              <div className="flex-shrink-0">
+                                <Check
+                                  className={`border shadow p-1 rounded-md text-lg ${
+                                    formData.type === type.value
+                                      ? "opacity-100 bg-primary text-primary-foreground"
+                                      : "opacity-0"
+                                  }`}
+                                />
+                              </div>
+                              <img
+                                src={`/property-type/${type.value}.jpg`}
+                                alt={type.label}
+                                className="h-40 w-40 object-cover rounded-md flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold truncate">
+                                  {type.label}
+                                </h4>
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                  {type.description}
+                                </p>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
@@ -265,52 +371,7 @@ const PropertyForm = () => {
             <CardDescription>Where is your property located?</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="address">Street Address *</Label>
-              <Input
-                id="address"
-                name="address"
-                placeholder="Enter street address"
-                value={formData.address}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City *</Label>
-                <Input
-                  id="city"
-                  name="city"
-                  placeholder="Enter city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="state">State *</Label>
-                <Input
-                  id="state"
-                  name="state"
-                  placeholder="Enter state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">ZIP Code *</Label>
-                <Input
-                  id="zipCode"
-                  name="zipCode"
-                  placeholder="Enter ZIP code"
-                  value={formData.zipCode}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+            <LocationSelect onLocationChange={handleLocationChange} />
           </CardContent>
         </Card>
 
