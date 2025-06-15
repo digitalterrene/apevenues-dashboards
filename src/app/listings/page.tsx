@@ -1,10 +1,13 @@
+import { Suspense } from "react";
 import PublicListings from "@/components/pages/PublicListings";
-import React from "react";
+import Loading from "@/components/pages/listings/loading";
 
-export default function page() {
+export default function Page() {
   return (
     <div className="w-full">
-      <PublicListings />
+      <Suspense fallback={<Loading />}>
+        <PublicListings />
+      </Suspense>
     </div>
   );
 }
