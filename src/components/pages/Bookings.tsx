@@ -26,10 +26,12 @@ import {
   Clock,
   Filter,
   Search,
+  X,
+  Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "../../contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface BookingRequest {
   id: string;
@@ -56,7 +58,64 @@ const Bookings = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
+  // Update the updateBookingStatus function to use Sonner correctly
+  const updateBookingStatus = async (
+    bookingId: string,
+    newStatus: "confirmed" | "rejected"
+  ) => {
+    // Show loading toast
+    const toastId = toast.loading("Updating booking status...");
+
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setBookings((prev) =>
+          prev.map((booking) =>
+            booking?.id === bookingId
+              ? { ...booking, status: newStatus }
+              : booking
+          )
+        );
+        // Success toast
+        toast.success(`Booking has been ${newStatus}`, {
+          id: toastId,
+          style: {
+            backgroundColor: "#6BADA0",
+            color: "white",
+            border: "none",
+          },
+          icon: <Check className="h-4 w-4" />,
+        });
+      } else {
+        throw new Error(data.error || "Failed to update booking");
+      }
+    } catch (error) {
+      // Error toast
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update booking status",
+        {
+          id: toastId,
+          style: {
+            backgroundColor: "#D22B2B",
+            color: "white",
+            border: "none",
+          },
+          icon: <X className="h-4 w-4" />,
+        }
+      );
+    }
+  };
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -68,17 +127,23 @@ const Bookings = () => {
         if (response.ok) {
           setBookings(data.bookings);
         } else {
-          toast({
-            title: "Error",
-            description: data.error || "Failed to fetch bookings",
-            variant: "destructive",
+          toast.error(data.error || "Failed to fetch bookings", {
+            style: {
+              backgroundColor: "#D22B2B",
+              color: "white",
+              border: "none",
+            },
+            icon: <X className="h-4 w-4" />,
           });
         }
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Network error occurred",
-          variant: "destructive",
+        toast.error("Network error occurred", {
+          style: {
+            backgroundColor: "#D22B2B",
+            color: "white",
+            border: "none",
+          },
+          icon: <X className="h-4 w-4" />,
         });
       } finally {
         setIsLoading(false);
@@ -88,7 +153,7 @@ const Bookings = () => {
     if (user) {
       fetchBookings();
     }
-  }, [user, toast]);
+  }, [user]);
 
   useEffect(() => {
     filterBookings();
@@ -117,48 +182,6 @@ const Bookings = () => {
     }
 
     setFilteredBookings(filtered);
-  };
-
-  const updateBookingStatus = async (
-    bookingId: string,
-    newStatus: "confirmed" | "rejected"
-  ) => {
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setBookings((prev) =>
-          prev.map((booking) =>
-            booking?.id === bookingId
-              ? { ...booking, status: newStatus }
-              : booking
-          )
-        );
-        toast({
-          title: "Booking Updated",
-          description: `Booking request has been ${newStatus}.`,
-        });
-      } else {
-        throw new Error(data.error || "Failed to update booking");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to update booking status",
-        variant: "destructive",
-      });
-    }
   };
 
   const getStatusColor = (status: string) => {

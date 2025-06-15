@@ -2,15 +2,17 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { Property, PropertyInput } from "@/types/property";
-import { getDb } from "@/lib/mongodb";
+import { createLogger } from "@/lib/logger";
+import { MongoClient } from "mongodb";
+
+const logger = createLogger("properties-api");
 
 const verifyToken = async (token: string): Promise<{ userId: string }> => {
-  if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET not configured");
-  }
-
   return new Promise((resolve, reject) => {
-    jwt.verify(token, `${process.env.JWT_SECRET}`, (err, decoded) => {
+    if (!process.env.JWT_SECRET) {
+      return reject(new Error("JWT_SECRET not configured"));
+    }
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) return reject(err);
       if (!decoded || typeof decoded !== "object" || !("userId" in decoded)) {
         return reject(new Error("Invalid token payload"));
@@ -20,32 +22,50 @@ const verifyToken = async (token: string): Promise<{ userId: string }> => {
   });
 };
 
+const validatePropertyInput = (data: any): PropertyInput => {
+  const requiredFields = ["name", "type", "address"];
+  const missingFields = requiredFields.filter((field) => !data[field]);
+
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+  }
+
+  return data as PropertyInput;
+};
+
 export async function POST(request: Request) {
   try {
+    // Validate environment
+    if (!process.env.JWT_SECRET) {
+      throw new Error("Server configuration error");
+    }
+
     // Authentication
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value;
     if (!token) {
+      logger.warn("Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const decoded = await verifyToken(token);
-    const propertyData: any = await request.json();
 
-    // Validation
-    const requiredFields = ["name", "type", "address"];
-    const missingFields = requiredFields.filter(
-      (field) => !propertyData[field]
-    );
-    if (missingFields.length > 0) {
+    // Input validation
+    let propertyData: PropertyInput;
+    try {
+      propertyData = await request.json().then(validatePropertyInput);
+    } catch (error) {
+      logger.warn("Invalid request payload", { error });
       return NextResponse.json(
-        { error: `Missing required fields: ${missingFields.join(", ")}` },
+        { error: error instanceof Error ? error.message : "Invalid request" },
         { status: 400 }
       );
     }
 
     // Database operations
-    const db = await getDb();
+    const client = await MongoClient.connect(process.env.MONGODB_URI!);
+    const db = client.db();
+
     const collection = db.collection<Property>("properties");
 
     const newProperty: Property = {
@@ -57,6 +77,7 @@ export async function POST(request: Request) {
     };
 
     const result = await collection.insertOne(newProperty);
+    logger.info(`Property created: ${result.insertedId}`);
 
     return NextResponse.json(
       {
@@ -69,8 +90,8 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch (error: unknown) {
-    console.error("Create property error:", error);
+  } catch (error) {
+    logger.error("Create property error:", error);
 
     if (error instanceof jwt.JsonWebTokenError) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
@@ -82,9 +103,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -100,7 +124,7 @@ export async function GET(request: Request) {
         const decoded = await verifyToken(token);
         userId = decoded.userId;
       } catch (authError) {
-        console.warn(
+        logger.warn(
           "Authentication error (non-critical for public listings):",
           authError
         );
@@ -110,7 +134,6 @@ export async function GET(request: Request) {
     // Query parameters
     const { searchParams } = new URL(request.url);
     const fetchMyProperties = searchParams.get("userId");
-    const searchTerm = searchParams.get("search");
     const typeFilter = searchParams.get("type");
     const cityFilter = searchParams.get("city");
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -120,21 +143,12 @@ export async function GET(request: Request) {
     );
 
     // Database operations
-    const db = await getDb();
+    const client = await MongoClient.connect(process.env.MONGODB_URI!);
+    const db = client.db();
     const collection = db.collection<Property>("properties");
 
     // Build query
     const query: any = { isActive: true };
-
-    // Add search filter if search term exists
-    if (searchTerm) {
-      query.$or = [
-        { name: { $regex: searchTerm, $options: "i" } },
-        { description: { $regex: searchTerm, $options: "i" } },
-        { address: { $regex: searchTerm, $options: "i" } },
-      ];
-    }
-
     if (fetchMyProperties && userId) {
       query.user_id = userId;
     }
@@ -145,7 +159,7 @@ export async function GET(request: Request) {
       query.city = cityFilter;
     }
 
-    // Get data
+    // Get total count and paginated results in parallel
     const [total, properties] = await Promise.all([
       collection.countDocuments(query),
       collection
@@ -161,6 +175,8 @@ export async function GET(request: Request) {
       id: _id.toString(),
     }));
 
+    logger.info(`Fetched ${properties.length} properties`);
+
     return NextResponse.json({
       success: true,
       properties: sanitizedProperties,
@@ -171,8 +187,8 @@ export async function GET(request: Request) {
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error: unknown) {
-    console.error("Get properties error:", error);
+  } catch (error) {
+    logger.error("Get properties error:", error);
 
     if (error instanceof Error && error.name === "MongoNetworkError") {
       return NextResponse.json(
@@ -181,8 +197,11 @@ export async function GET(request: Request) {
       );
     }
 
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
+    );
   }
 }

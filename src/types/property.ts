@@ -2,10 +2,10 @@
 import { ObjectId } from "mongodb";
 
 export interface Property {
-  province: string;
+  province?: string;
   _id?: ObjectId;
-  id: string;
-  businessId: string;
+  id?: string;
+  businessId?: string;
   name: string;
   type: "restaurant" | "bar" | "cafe" | "club" | "hotel" | "other";
   address: string;
@@ -20,6 +20,7 @@ export interface Property {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  user_id?: string;
 }
 
 export interface PropertyInput {

@@ -41,6 +41,7 @@
     "react-select": "^5.10.1",
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.0",
+    "winston": "^3.17.0",
     "zustand": "^5.0.5"
   },
   "devDependencies": {
