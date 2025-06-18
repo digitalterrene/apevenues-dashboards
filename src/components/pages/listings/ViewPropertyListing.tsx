@@ -33,7 +33,7 @@ import BookingModal from "@/components/booking/BookingModal";
 
 const ViewPropertyListing = () => {
   const { id } = useParams();
-  const { properties, deleteProperty } = useProperties();
+  const { properties, getPropertyById, deleteProperty } = useProperties();
   const { user } = useAuth();
   const router = useRouter();
   const [property, setProperty] = useState<Property | null>(null);
@@ -44,18 +44,21 @@ const ViewPropertyListing = () => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(
     null
   );
-  useEffect(() => {
-    if (properties.length > 0) {
-      const foundProperty = properties.find((p) => p.id === id);
-      if (foundProperty) {
-        setProperty(foundProperty);
+  const fetchProperty = async () => {
+    const property = await getPropertyById(id as string);
+    if (id) {
+      if (property) {
+        setProperty(property);
       } else {
         toast.error("Property not found");
         router.push("/properties");
       }
       setLoading(false);
     }
-  }, [id, properties, router]);
+  };
+  useEffect(() => {
+    fetchProperty();
+  }, [id, router]);
 
   const handleDelete = async () => {
     if (!property || !user) return;
