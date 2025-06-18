@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Users, Filter, Loader2, Frown } from "lucide-react";
 import { Property } from "@/types";
-import BookingModal from "../booking/BookingModal";
+import BookingModal from "../../booking/BookingModal";
 import {
   Pagination,
   PaginationContent,
@@ -28,10 +28,11 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import Header from "../layout/header";
+import Header from "../../layout/header";
 import { toast } from "sonner";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { debounce } from "@/lib/utils/debounce";
+import Link from "next/link";
 
 const DEFAULT_LIMIT = 6;
 
@@ -40,6 +41,9 @@ const PublicListings = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(
+    null
+  );
   const [currentPage, setCurrentPage] = useState(1);
 
   // State with safe defaults
@@ -47,9 +51,6 @@ const PublicListings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(
-    null
-  );
 
   // Get query params with fallbacks
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -308,7 +309,10 @@ const PublicListings = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {properties?.map((property) => (
             <Card key={property.id} className="h-full flex flex-col">
-              <div className="aspect-video bg-gray-100 relative overflow-hidden">
+              <Link
+                href={`/listings/${property?.id}`}
+                className="aspect-video rounded-t-lg bg-gray-100 relative overflow-hidden"
+              >
                 {property?.images?.[0] ? (
                   <img
                     src={property.images[0]}
@@ -329,14 +333,17 @@ const PublicListings = () => {
                     variant="secondary"
                     className="bg-white/90 backdrop-blur-sm"
                   >
-                    {getPriceRangeDisplay(property.priceRange)}
+                    R {property.priceRange}
                   </Badge>
                 </div>
-              </div>
+              </Link>
 
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-1">
+                  <Link
+                    href={`/listings/${property?.id}`}
+                    className="space-y-1"
+                  >
                     <CardTitle className="text-lg line-clamp-1">
                       {property.name || "Unnamed Venue"}
                     </CardTitle>
@@ -348,7 +355,7 @@ const PublicListings = () => {
                           .join(", ") || "Location not specified"}
                       </span>
                     </CardDescription>
-                  </div>
+                  </Link>
                   <Badge variant="outline" className="capitalize">
                     {property.type || "other"}
                   </Badge>
@@ -356,9 +363,12 @@ const PublicListings = () => {
               </CardHeader>
 
               <CardContent className="flex-1 flex flex-col">
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                <Link
+                  href={`/listings/${property?.id}`}
+                  className="text-gray-600 text-sm mb-4 line-clamp-2"
+                >
                   {property.description || "No description available"}
-                </p>
+                </Link>
 
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-1 text-sm text-gray-600">
