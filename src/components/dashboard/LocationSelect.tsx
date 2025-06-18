@@ -1,4 +1,3 @@
-// components/LocationSelect.tsx
 import React, { useState, useEffect } from "react";
 import {
   Select,
@@ -7,11 +6,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Country, State, City } from "country-state-city";
+import { State, City } from "country-state-city";
 import { useLocationContext } from "@/contexts/LocationContext";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import Image from "next/image";
 
 interface Option {
   value: string;
@@ -31,14 +29,11 @@ interface LocationData {
 }
 
 const LocationSelect = ({
-  gridCols,
   onLocationChange,
 }: {
-  gridCols?: number;
   onLocationChange: (location: LocationData) => void;
 }) => {
-  const [selectedProvince, setSelectedProvince] = useState("all");
-  const [selectedCity, setSelectedCity] = useState("all");
+  const { inputs, setInputs } = useLocationContext();
   const [propertyAddress, setPropertyAddress] = useState<LocationData>({
     address: "",
     city: "",
@@ -51,9 +46,23 @@ const LocationSelect = ({
   const [loadingLocations, setLoadingLocations] = useState(true);
   const [errorFetching, setErrorFetching] = useState<string | null>(null);
 
-  const { setInputs } = useLocationContext();
+  // Initialize selected values from inputs after they're loaded
+  const [selectedProvince, setSelectedProvince] = useState("all");
+  const [selectedCity, setSelectedCity] = useState("all");
 
-  // Fixed CORS issue by using a proxy or direct image URL
+  useEffect(() => {
+    if (inputs) {
+      setPropertyAddress({
+        address: inputs.address || "",
+        city: inputs.city || "",
+        zipCode: inputs.zipCode || "",
+        province: inputs.province || "",
+      });
+      setSelectedProvince(inputs.province || "all");
+      setSelectedCity(inputs.city || "all");
+    }
+  }, [inputs]);
+
   const getLocationImageUrl = (city: string, province: string) => {
     if (!city || !province || city === "all" || province === "all") {
       return "https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&h=200&q=80";
@@ -115,7 +124,7 @@ const LocationSelect = ({
     };
 
     loadLocations();
-  }, []);
+  }, []); // Removed inputs from dependencies
 
   useEffect(() => {
     if (selectedCity !== "all" && selectedProvince !== "all") {
@@ -130,7 +139,7 @@ const LocationSelect = ({
     setSelectedCity("all");
     updateLocationContext({
       province: value,
-      city: "all",
+      city: "all", // Reset city when province changes
     });
   };
 

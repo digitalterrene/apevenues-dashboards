@@ -2,6 +2,7 @@
 import { ObjectId } from "mongodb";
 
 export interface Property {
+  priceDuration: "hour" | "day" | "week" | "month";
   province?: string;
   _id?: ObjectId;
   id?: string;
