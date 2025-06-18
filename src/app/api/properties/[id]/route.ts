@@ -73,7 +73,7 @@ export async function PUT(
     // Verify property belongs to user
     const existingProperty = await db.collection("properties").findOne({
       _id: new ObjectId(params.id),
-      businessId: decoded.userId,
+      user_id: decoded.userId,
     });
 
     if (!existingProperty) {

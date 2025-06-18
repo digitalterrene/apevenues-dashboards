@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import PublicListings from "@/components/pages/PublicListings";
+import PublicListings from "@/components/pages/listings/PublicListings";
 import Loading from "@/components/pages/listings/loading";
 
 export default function Page() {

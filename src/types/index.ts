@@ -8,8 +8,9 @@ export interface Property {
   zipCode: string;
   description: string;
   capacity: number;
-  priceRange: "budget" | "moderate" | "upscale" | "luxury";
+  priceRange: number;
   amenities: string[];
+  priceDuration: "hour" | "day" | "week" | "month";
   images: string[];
   isActive: boolean;
   businessId: string;

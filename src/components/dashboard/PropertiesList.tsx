@@ -200,6 +200,7 @@ const PropertiesList = () => {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
+                      className="cursor-pointer"
                       size="sm"
                       onClick={() => toggleActive(property)}
                     >
@@ -211,6 +212,7 @@ const PropertiesList = () => {
                     </Button>
                     <Button
                       variant="outline"
+                      className="cursor-pointer"
                       size="sm"
                       onClick={() =>
                         router.push(`/dashboard/properties/${property.id}/edit`)
@@ -222,7 +224,7 @@ const PropertiesList = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(property)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

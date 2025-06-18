@@ -5,9 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import path from "path";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const router = useRouter();
+  const { user } = useAuth();
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 py-4">
@@ -28,7 +30,7 @@ export default function Header() {
               <Search className="h-4 w-4 mr-2" />
               Find Venues
             </Button>
-            <Link href="/login">
+            <Link href={user?._id ? "/login" : "dashboard"}>
               <Button variant="outline" className="cursor-pointer">
                 Sign In
               </Button>

@@ -34,10 +34,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLocationContext } from "@/contexts/LocationContext";
 import { propertyTypes } from "@/lib/data/propertyTypes";
 import { AMENITIES } from "@/lib/data/amenities";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 const PropertyForm = () => {
   const id = useSearchParams().get("id");
   const isEditing = Boolean(id);
+  const { user } = useAuth();
   const { properties, addProperty, updateProperty } = useProperties();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -51,13 +61,13 @@ const PropertyForm = () => {
     zipCode: locationData?.zipCode,
     description: "",
     capacity: "",
-    priceRange: "moderate" as Property["priceRange"],
+    priceRange: 0,
+    priceDuration: "",
     amenities: [] as string[],
     images: [] as string[],
-    user_id: "",
+    user_id: user?.id || (user?._id as string),
     isActive: true,
   });
-  const { user } = useAuth();
   const [newAmenity, setNewAmenity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState({
@@ -72,18 +82,19 @@ const PropertyForm = () => {
       const property = properties.find((p) => p.id === id);
       if (property) {
         setFormData({
-          name: property.name,
-          type: property.type,
-          address: property.address,
-          city: property.city,
-          province: property.province,
-          zipCode: property.zipCode,
-          description: property.description,
-          capacity: property.capacity.toString(),
-          priceRange: property.priceRange,
-          amenities: property.amenities,
-          images: property.images,
-          isActive: property.isActive,
+          name: property?.name,
+          type: property?.type,
+          address: property?.address,
+          city: property?.city,
+          province: property?.province as string,
+          zipCode: property?.zipCode,
+          description: property?.description,
+          capacity: property?.capacity?.toString(),
+          priceRange: property?.priceRange as any,
+          priceDuration: property?.priceDuration,
+          amenities: property?.amenities,
+          images: property?.images,
+          isActive: property?.isActive,
           user_id: user?.id || (user?._id as string),
         });
         // Initialize imagePreviews with existing images
@@ -123,9 +134,9 @@ const PropertyForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
+    // console.log({ formData, locationData });
     try {
-      const propertyData = {
+      const propertyData: any = {
         ...formData,
         ...location,
         capacity: parseInt(formData.capacity) || 0,
@@ -146,12 +157,6 @@ const PropertyForm = () => {
     }
   };
 
-  const priceRanges = [
-    { value: "budget", label: "Budget (R)" },
-    { value: "moderate", label: "Moderate (RR)" },
-    { value: "upscale", label: "Upscale (RRR)" },
-    { value: "luxury", label: "Luxury (RRRR)" },
-  ];
   const handleLocationChange = (newLocation: {
     address: string;
     city: string;
@@ -449,20 +454,40 @@ const PropertyForm = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="priceRange">Price Range *</Label>
-                <select
-                  id="priceRange"
-                  name="priceRange"
-                  value={formData.priceRange}
-                  onChange={handleChange}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                  required
-                >
-                  {priceRanges.map((range) => (
-                    <option key={range.value} value={range.value}>
-                      {range.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-3 gap-4">
+                  <Input
+                    id="priceRange"
+                    name="priceRange"
+                    placeholder="R0"
+                    value={formData.priceRange}
+                    onChange={handleChange}
+                    required
+                    type="number"
+                    className="col-span-2"
+                  />
+                  <Select
+                    value={formData?.priceDuration}
+                    onValueChange={(e) => {
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        priceDuration: e,
+                      }));
+                    }}
+                  >
+                    <SelectTrigger className="  h-9">
+                      <SelectValue placeholder="Select duration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup className=" ">
+                        <SelectLabel>Duration</SelectLabel>
+                        <SelectItem value="hour">Hour</SelectItem>
+                        <SelectItem value="day">Day</SelectItem>
+                        <SelectItem value="week">Week</SelectItem>
+                        <SelectItem value="month">Month</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </CardContent>
