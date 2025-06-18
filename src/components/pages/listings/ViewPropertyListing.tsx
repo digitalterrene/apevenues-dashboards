@@ -45,7 +45,7 @@ const ViewPropertyListing = () => {
     null
   );
   useEffect(() => {
-    if (id && properties.length > 0) {
+    if (properties.length > 0) {
       const foundProperty = properties.find((p) => p.id === id);
       if (foundProperty) {
         setProperty(foundProperty);
