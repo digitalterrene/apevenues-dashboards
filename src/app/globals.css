@@ -79,7 +79,7 @@
   --sidebar-width: 250px;
   --sidebar-collapsed-width: 80px;
 }
-
+ 
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
