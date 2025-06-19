@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-import { Property, PropertyInput } from "@/types/property";
-import { createLogger } from "@/lib/logger";
-import { MongoClient } from "mongodb";
-
-const logger = createLogger("properties-api");
+import { getDb } from "@/lib/mongodb";
+import { Service } from "@/types/service";
 
 const verifyToken = async (token: string): Promise<{ userId: string }> => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET not configured");
+  }
+
   return new Promise((resolve, reject) => {
-    if (!process.env.JWT_SECRET) {
-      return reject(new Error("JWT_SECRET not configured"));
-    }
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, `${process.env.JWT_SECRET}`, (err, decoded) => {
       if (err) return reject(err);
       if (!decoded || typeof decoded !== "object" || !("userId" in decoded)) {
         return reject(new Error("Invalid token payload"));
@@ -22,76 +20,62 @@ const verifyToken = async (token: string): Promise<{ userId: string }> => {
   });
 };
 
-const validatePropertyInput = (data: any): PropertyInput => {
-  const requiredFields = ["name", "type", "address"];
-  const missingFields = requiredFields.filter((field) => !data[field]);
-
-  if (missingFields.length > 0) {
-    throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
-  }
-
-  return data as PropertyInput;
-};
-
 export async function POST(request: Request) {
   try {
-    // Validate environment
-    if (!process.env.JWT_SECRET) {
-      throw new Error("Server configuration error");
-    }
-
     // Authentication
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value;
     if (!token) {
-      logger.warn("Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const decoded = await verifyToken(token);
+    const serviceData: any = await request.json();
 
-    // Input validation
-    let propertyData: PropertyInput;
-    try {
-      propertyData = await request.json().then(validatePropertyInput);
-    } catch (error) {
-      logger.warn("Invalid request payload", { error });
+    // Validation
+    const requiredFields = [
+      "name",
+      "description",
+      "price",
+      "duration",
+      "category",
+    ];
+    const missingFields = requiredFields.filter((field) => !serviceData[field]);
+    if (missingFields.length > 0) {
       return NextResponse.json(
-        { error: error instanceof Error ? error.message : "Invalid request" },
+        { error: `Missing required fields: ${missingFields.join(", ")}` },
         { status: 400 }
       );
     }
 
     // Database operations
-    const client = await MongoClient.connect(process.env.MONGODB_URI!);
-    const db = client.db();
+    const db = await getDb();
+    const collection = db.collection("services");
 
-    const collection = db.collection<Property>("properties");
-
-    const newProperty: Property = {
-      ...propertyData,
+    const newService: Service = {
+      ...serviceData,
       user_id: decoded.userId,
       createdAt: new Date(),
       updatedAt: new Date(),
-      isActive: true,
+      isActive:
+        serviceData.isActive !== undefined ? serviceData.isActive : true,
     };
 
-    const result = await collection.insertOne(newProperty);
-    logger.info(`Property created: ${result.insertedId}`);
+    const result = await collection.insertOne(newService);
 
     return NextResponse.json(
       {
         success: true,
-        property: {
-          ...newProperty,
+        service: {
+          ...newService,
           id: result.insertedId.toString(),
           _id: undefined,
         },
       },
       { status: 201 }
     );
-  } catch (error) {
-    logger.error("Create property error:", error);
+  } catch (error: unknown) {
+    console.error("Create service error:", error);
 
     if (error instanceof jwt.JsonWebTokenError) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
@@ -103,12 +87,9 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -124,7 +105,7 @@ export async function GET(request: Request) {
         const decoded = await verifyToken(token);
         userId = decoded.userId;
       } catch (authError) {
-        logger.warn(
+        console.warn(
           "Authentication error (non-critical for public listings):",
           authError
         );
@@ -133,7 +114,8 @@ export async function GET(request: Request) {
 
     // Query parameters
     const { searchParams } = new URL(request.url);
-    const fetchMyProperties = searchParams.get("userId");
+    const fetchMyServices = searchParams.get("userId");
+    const searchTerm = searchParams.get("search");
     const typeFilter = searchParams.get("type");
     const cityFilter = searchParams.get("city");
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -143,13 +125,22 @@ export async function GET(request: Request) {
     );
 
     // Database operations
-    const client = await MongoClient.connect(process.env.MONGODB_URI!);
-    const db = client.db();
-    const collection = db.collection<Property>("properties");
+    const db = await getDb();
+    const collection = db.collection<Service>("services");
 
     // Build query
-    const query: any = { isActive: true };
-    if (fetchMyProperties && userId) {
+    const query: any = {};
+
+    // Add search filter if search term exists
+    if (searchTerm) {
+      query.$or = [
+        { name: { $regex: searchTerm, $options: "i" } },
+        { description: { $regex: searchTerm, $options: "i" } },
+        { address: { $regex: searchTerm, $options: "i" } },
+      ];
+    }
+
+    if (fetchMyServices && userId) {
       query.user_id = userId;
     }
     if (typeFilter && typeFilter !== "all") {
@@ -159,8 +150,8 @@ export async function GET(request: Request) {
       query.city = cityFilter;
     }
 
-    // Get total count and paginated results in parallel
-    const [total, properties] = await Promise.all([
+    // Get data
+    const [total, services] = await Promise.all([
       collection.countDocuments(query),
       collection
         .find(query)
@@ -170,16 +161,14 @@ export async function GET(request: Request) {
         .toArray(),
     ]);
 
-    const sanitizedProperties = properties.map(({ _id, ...prop }) => ({
+    const sanitizedProperties = services.map(({ _id, ...prop }) => ({
       ...prop,
       id: _id.toString(),
     }));
 
-    logger.info(`Fetched ${properties.length} properties`);
-
     return NextResponse.json({
       success: true,
-      properties: sanitizedProperties,
+      services: sanitizedProperties,
       pagination: {
         page,
         limit,
@@ -187,8 +176,8 @@ export async function GET(request: Request) {
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error) {
-    logger.error("Get properties error:", error);
+  } catch (error: unknown) {
+    console.error("Get services error:", error);
 
     if (error instanceof Error && error.name === "MongoNetworkError") {
       return NextResponse.json(
@@ -197,11 +186,8 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
