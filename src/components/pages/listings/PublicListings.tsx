@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { debounce } from "@/lib/utils/debounce";
 import Link from "next/link";
+import Image from "next/image";
 
 const DEFAULT_LIMIT = 6;
 
@@ -173,17 +174,6 @@ const PublicListings = () => {
     setShowBookingModal(true);
   };
 
-  const getPriceRangeDisplay = (priceRange?: string) => {
-    if (!priceRange) return "";
-    const ranges = {
-      budget: "R",
-      moderate: "RR",
-      upscale: "RRR",
-      luxury: "RRRR",
-    };
-    return ranges[priceRange as keyof typeof ranges] || "";
-  };
-
   // Calculate total pages
   const totalPages = Math.ceil(totalCount / DEFAULT_LIMIT);
 
@@ -314,7 +304,8 @@ const PublicListings = () => {
                 className="aspect-video rounded-t-lg bg-gray-100 relative overflow-hidden"
               >
                 {property?.images?.[0] ? (
-                  <img
+                  <Image
+                    fill
                     src={property.images[0]}
                     alt={property.name || "Venue image"}
                     className="w-full h-full object-cover"
@@ -324,16 +315,23 @@ const PublicListings = () => {
                     }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    No Image
-                  </div>
+                  <Image
+                    fill
+                    src={"/property-type/placeholder-property-image.jpg"}
+                    alt={property.name || "Venue image"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "/placeholder-image.jpg";
+                    }}
+                  />
                 )}
                 <div className="absolute top-3 right-3">
                   <Badge
                     variant="secondary"
                     className="bg-white/90 backdrop-blur-sm"
                   >
-                    R {property.priceRange}
+                    R {property.priceRange}/{property.priceDuration || "hour"}
                   </Badge>
                 </div>
               </Link>

@@ -1,26 +1,17 @@
 "use client";
 import React, { useEffect, useState } from "react";
-// import { Property, Amenity } from "../../types";
-// import { useProperties } from "../../hooks/useProperties";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+
 import {
   MapPin,
   Users,
   Clock,
   Ruler,
   BedDouble,
-  Bath,
-  Wifi,
+  ArrowLeft,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -30,16 +21,16 @@ import { Amenity, Property } from "@/types";
 import AmenityIcon from "./AmenityIcon";
 import Header from "@/components/layout/header";
 import BookingModal from "@/components/booking/BookingModal";
+import PropertyGallery from "./PropertyGallery";
 
 const ViewPropertyListing = () => {
   const { id } = useParams();
-  const { properties, getPropertyById, deleteProperty } = useProperties();
+  const { getPropertyById, deleteProperty } = useProperties();
   const { user } = useAuth();
   const router = useRouter();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(
     null
@@ -85,7 +76,7 @@ const ViewPropertyListing = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container mx-auto px-4 py-8">
+        <div className=" max-w-7xl mx-auto  px-4 py-8">
           <div className="grid gap-6">
             <Skeleton className="h-10 w-1/3" />
             <div className="grid md:grid-cols-2 gap-6">
@@ -145,99 +136,68 @@ const ViewPropertyListing = () => {
     setSelectedProperty(property);
     setShowBookingModal(true);
   };
+  console.log({
+    property,
+    user_id: user?.id || user?._id,
+    property_user_id: property.user_id,
+  });
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="container mx-auto px-4 py-8">
+      <div className="  max-w-7xl mx-auto  px-4 py-8">
         <div className="flex justify-between items-start mb-8">
           <div className="w-full">
             <div className="w-full   items-center  flex justify-between">
               <h1 className="text-3xl font-bold tracking-tight">
                 {property.name}
               </h1>
-              <Button
-                onClick={() => handleBooking(property)}
-                className="  bg-[#6BADA0] hover:bg-[#8E9196]"
-              >
-                Book Now
-              </Button>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => router.push("/listings")}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Properties
+                </Button>
+                <Button
+                  onClick={() => handleBooking(property)}
+                  className="  bg-[#6BADA0] hover:bg-[#8E9196]"
+                >
+                  Book Now
+                </Button>
+
+                {(user?.id || user?._id) === property.user_id && (
+                  <div className="flex gap-4">
+                    <Button variant="outline" onClick={handleEdit}>
+                      Edit Property
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      {deleting ? "Deleting..." : "Delete Property"}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center mt-2 text-muted-foreground">
               <MapPin className="h-4 w-4 mr-1" />
               <span>
-                {property.city}, {property.province}
+                {`${property.address} ${property.zipCode} ${property.city} ${property.province}` ||
+                  "Location unspecified"}
               </span>
             </div>
           </div>
-
-          {user?.id === property.user_id && (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleEdit}>
-                Edit Property
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? "Deleting..." : "Delete Property"}
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* Main content */}
         <div className="grid md:grid-cols-2 gap-8">
           {/* Image gallery */}
-          <div>
-            <Carousel className="w-full">
-              <CarouselContent>
-                {property.images.map((image, index) => (
-                  <CarouselItem key={index}>
-                    <div className="relative aspect-video overflow-hidden rounded-lg">
-                      <img
-                        src={image}
-                        alt={`${property.name} - Image ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "/placeholder-property.jpg";
-                        }}
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              {property.images.length > 1 && (
-                <>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </>
-              )}
-            </Carousel>
-
-            {/* Thumbnail navigation */}
-            {property.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2 mt-4">
-                {property.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveImageIndex(index)}
-                    className={`relative aspect-square overflow-hidden rounded-md border-2 ${
-                      activeImageIndex === index
-                        ? "border-primary"
-                        : "border-transparent"
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`Thumbnail ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className=" ">
+            <PropertyGallery images={property.images} />
           </div>
 
           {/* Property details */}
@@ -372,27 +332,6 @@ const ViewPropertyListing = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Contact/CTA section */}
-        <div className="mt-8 p-6 bg-muted/50 rounded-lg">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl font-bold mb-4">
-              Interested in this venue?
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Contact the property owner to check availability or ask any
-              questions.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="px-8">
-                Contact Owner
-              </Button>
-              <Button size="lg" variant="outline" className="px-8">
-                Check Availability
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
       {/* Booking Modal */}

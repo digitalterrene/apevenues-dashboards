@@ -16,6 +16,7 @@ export interface Property {
   businessId: string;
   createdAt: string;
   updatedAt: string;
+  user_id: string;
 }
 
 export interface BusinessProfile {
