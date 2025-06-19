@@ -15,6 +15,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Checkbox } from "../ui/checkbox";
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
@@ -30,6 +31,7 @@ const SignupForm = () => {
   const { signup } = useAuth();
   const router = useRouter();
 
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
       ...prev,
@@ -148,19 +150,38 @@ const SignupForm = () => {
               <Input
                 id="password"
                 name="password"
-                type="password"
+                type={isPasswordVisible ? "text" : "password"}
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
                 required
               />
             </div>
+            <div className="items-top flex space-x-2">
+              <Checkbox
+                onCheckedChange={(checked: boolean) => {
+                  return checked
+                    ? setIsPasswordVisible(true)
+                    : setIsPasswordVisible(false);
+                }}
+                id="show-password"
+                className="border "
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="show-password"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Show Password
+                </label>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
-                type="password"
+                type={isPasswordVisible ? "text" : "password"}
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChange={handleChange}

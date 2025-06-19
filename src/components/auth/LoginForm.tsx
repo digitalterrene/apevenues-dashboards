@@ -15,10 +15,12 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Checkbox } from "../ui/checkbox";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
@@ -75,12 +77,31 @@ const LoginForm = () => {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
-                type="password"
+                type={isPasswordVisible ? "text" : "password"}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>{" "}
+            <div className="items-top flex space-x-2">
+              <Checkbox
+                onCheckedChange={(checked: boolean) => {
+                  return checked
+                    ? setIsPasswordVisible(true)
+                    : setIsPasswordVisible(false);
+                }}
+                id="show-password"
+                className="border "
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="show-password"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Show Password
+                </label>
+              </div>
             </div>
             <Button
               type="submit"
