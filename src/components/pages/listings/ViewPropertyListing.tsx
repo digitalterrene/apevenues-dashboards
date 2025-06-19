@@ -23,6 +23,7 @@ import Header from "@/components/layout/header";
 import BookingModal from "@/components/booking/BookingModal";
 import PropertyGallery from "./PropertyGallery";
 import PropertyMap from "./PropertyMap";
+import { AMENITIES } from "@/lib/data/amenities";
 
 const ViewPropertyListing = () => {
   const { id } = useParams();
@@ -57,7 +58,7 @@ const ViewPropertyListing = () => {
 
     setDeleting(true);
     try {
-      await deleteProperty(property.id);
+      await deleteProperty(property?.id);
       toast.success("Property deleted successfully");
       router.push("/dashboard/properties");
     } catch (error) {
@@ -70,7 +71,7 @@ const ViewPropertyListing = () => {
 
   const handleEdit = () => {
     if (!property) return;
-    router.push(`/dashboard/properties/edit?id=${property.id}`);
+    router.push(`/dashboard/properties/edit?id=${property?.id}`);
   };
 
   if (loading || !property) {
@@ -116,8 +117,8 @@ const ViewPropertyListing = () => {
   };
 
   // Group amenities by category for better display
-  const groupedAmenities = property.amenities.reduce((acc, amenityValue) => {
-    const amenity = AMENITIES.find((a) => a.value === amenityValue) || {
+  const groupedAmenities = property?.amenities.reduce((acc, amenityValue) => {
+    const amenity = AMENITIES?.find((a) => a.value === amenityValue) || {
       label: amenityValue,
       category: "Other",
       icon: "➕",
@@ -140,7 +141,7 @@ const ViewPropertyListing = () => {
   console.log({
     property,
     user_id: user?.id || user?._id,
-    property_user_id: property.user_id,
+    property_user_id: property?.user_id,
   });
   return (
     <div className="min-h-screen bg-gray-50">
@@ -150,7 +151,7 @@ const ViewPropertyListing = () => {
           <div className="w-full">
             <div className="w-full   items-center  flex justify-between">
               <h1 className="text-3xl font-bold tracking-tight">
-                {property.name}
+                {property?.name}
               </h1>
               <div className="flex items-center gap-4">
                 <Button
@@ -168,7 +169,7 @@ const ViewPropertyListing = () => {
                   Book Now
                 </Button>
 
-                {(user?.id || user?._id) === property.user_id && (
+                {(user?.id || user?._id) === property?.user_id && (
                   <div className="flex gap-4">
                     <Button variant="outline" onClick={handleEdit}>
                       Edit Property
@@ -187,8 +188,9 @@ const ViewPropertyListing = () => {
             <div className="flex items-center mt-2 text-muted-foreground">
               <MapPin className="h-4 w-4 mr-1" />
               <span>
-                {`${property.address} ${property.zipCode} ${property.city} ${property.province}` ||
-                  "Location unspecified"}
+                {property?.address
+                  ? `${property?.address} ${property?.zipCode} ${property?.city} ${property?.province}`
+                  : "Address not specified"}
               </span>
             </div>
           </div>
@@ -198,7 +200,7 @@ const ViewPropertyListing = () => {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Image gallery */}
           <div className=" ">
-            <PropertyGallery images={property.images} />
+            <PropertyGallery images={property?.images} />
           </div>
 
           {/* Property details */}
@@ -207,47 +209,42 @@ const ViewPropertyListing = () => {
             <Card>
               <CardHeader className="pb-4">
                 <CardTitle className="text-2xl">
-                  {formatPrice(property.priceRange)}
+                  {formatPrice(property?.priceRange)}
                   <span className="text-base font-normal text-muted-foreground ml-1">
-                    / {property.priceDuration}
+                    / {property?.priceDuration}
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
+              <CardContent className="grid grid-cols-3 gap-4">
+                <div className="flex items-start space-x-2">
                   <Users className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Capacity</p>
-                    <p className="font-medium">{property.capacity} people</p>
+                    <p className="font-medium">{property?.capacity} people</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-2">
                   <BedDouble className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">Type</p>
-                    <p className="font-medium capitalize">{property.type}</p>
+                    <p className="font-medium capitalize">
+                      {property?.type?.replaceAll("_", " ")}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-2">
                   <Clock className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">
                       Availability
                     </p>
                     <p className="font-medium">
-                      {property.isActive ? (
+                      {property?.isActive ? (
                         <Badge variant="default">Available</Badge>
                       ) : (
                         <Badge variant="secondary">Unavailable</Badge>
                       )}
                     </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Ruler className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Size</p>
-                    <p className="font-medium">-</p>
                   </div>
                 </div>
               </CardContent>
@@ -260,7 +257,7 @@ const ViewPropertyListing = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground whitespace-pre-line">
-                  {property.description || "No description provided."}
+                  {property?.description || "No description provided."}
                 </p>
               </CardContent>
             </Card>
@@ -272,10 +269,13 @@ const ViewPropertyListing = () => {
               </CardHeader>
               <CardContent>
                 {Object.entries(groupedAmenities).length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="gap-4 grid grid-cols-2">
                     {Object.entries(groupedAmenities).map(
                       ([category, amenities]) => (
-                        <div key={category}>
+                        <div
+                          key={category}
+                          className="border rounded-lg w-full h-24 p-3"
+                        >
                           <h3 className="font-medium mb-2">{category}</h3>
                           <div className="grid grid-cols-2 gap-2">
                             {amenities.map((amenity, index) => (
@@ -283,11 +283,16 @@ const ViewPropertyListing = () => {
                                 key={index}
                                 className="flex items-center space-x-2"
                               >
-                                <AmenityIcon
-                                  amenity={amenity.value}
-                                  className="h-5 w-5 text-muted-foreground"
-                                />
-                                <span>{amenity.label}</span>
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="flex text-nowrap items-center gap-1"
+                                >
+                                  <span className="text-lg">
+                                    {amenity.icon}
+                                  </span>
+                                  {amenity.label}
+                                </Badge>
                               </div>
                             ))}
                           </div>
@@ -297,7 +302,7 @@ const ViewPropertyListing = () => {
                   </div>
                 ) : (
                   <p className="text-muted-foreground">
-                    No amenities listed for this property.
+                    No amenities listed for this property?.
                   </p>
                 )}
               </CardContent>
@@ -316,20 +321,20 @@ const ViewPropertyListing = () => {
                 <div className="space-y-2">
                   <h3 className="font-medium">Address</h3>
                   <p className="text-muted-foreground">
-                    {property.address || "Address not specified"}
+                    {property?.address || "Address not specified"}
                   </p>
                   <p className="text-muted-foreground">
-                    {property.city}, {property.province}
+                    {property?.city}, {property?.province}
                   </p>
-                  <p className="text-muted-foreground">{property.zipCode}</p>
+                  <p className="text-muted-foreground">{property?.zipCode}</p>
                 </div>
                 <div className="h-64 bg-muted rounded-lg overflow-hidden">
                   {/* Map placeholder - replace with actual map component */}
                   <PropertyMap
-                    address={property.address}
-                    city={property.city}
-                    province={property.province}
-                    zipCode={property.zipCode}
+                    address={property?.address}
+                    city={property?.city}
+                    province={property?.province}
+                    zipCode={property?.zipCode}
                   />
                 </div>
               </div>
@@ -348,26 +353,5 @@ const ViewPropertyListing = () => {
     </div>
   );
 };
-
-// Amenities data (should be imported from your constants)
-const AMENITIES: any[] = [
-  { value: "wifi", label: "Wi-Fi", category: "Connectivity", icon: "📶" },
-  { value: "parking", label: "Parking", category: "Facilities", icon: "🅿️" },
-  { value: "pool", label: "Swimming Pool", category: "Facilities", icon: "🏊" },
-  { value: "gym", label: "Gym", category: "Facilities", icon: "💪" },
-  { value: "ac", label: "Air Conditioning", category: "Comfort", icon: "❄️" },
-  { value: "heating", label: "Heating", category: "Comfort", icon: "🔥" },
-  { value: "kitchen", label: "Kitchen", category: "Facilities", icon: "🍳" },
-  { value: "tv", label: "TV", category: "Entertainment", icon: "📺" },
-  { value: "workspace", label: "Workspace", category: "Business", icon: "💻" },
-  { value: "breakfast", label: "Breakfast", category: "Food", icon: "🍳" },
-  { value: "security", label: "Security", category: "Safety", icon: "🔒" },
-  {
-    value: "elevator",
-    label: "Elevator",
-    category: "Accessibility",
-    icon: "🛗",
-  },
-];
 
 export default ViewPropertyListing;
