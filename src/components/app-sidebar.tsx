@@ -7,6 +7,7 @@ import {
   LogOut,
   CreditCard,
   Calendar,
+  Luggage,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
@@ -45,6 +46,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       subPaths: ["/dashboard/properties/create", "/dashboard/properties/edit"],
     },
     { path: "/dashboard/bookings", label: "Bookings", icon: Calendar },
+    {
+      path: "/dashboard/services",
+      label: "Services",
+      icon: Luggage,
+    },
     {
       path: "/dashboard/subscriptions",
       label: "Subscriptions",

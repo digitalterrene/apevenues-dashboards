@@ -1,6 +1,11 @@
 import React, { useState } from "react";
-import { useProperties } from "../../hooks/useProperties";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,60 +16,59 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  Building2,
-  MapPin,
-  Users,
+  Clock,
+  Calendar,
+  Tag,
   Filter,
 } from "lucide-react";
-import { Property } from "../../types";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useServices } from "@/hooks/userServices";
+import { Service } from "@/types/service";
 
-const PropertiesList = () => {
-  const { properties, isLoading, deleteProperty, updateProperty } =
-    useProperties();
+const ServicesList = () => {
+  const { services, isLoading, deleteService, updateService } = useServices();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
 
-  const filteredProperties = properties.filter((property) => {
+  const filteredServices = services.filter((service) => {
     const matchesSearch =
-      property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.city.toLowerCase().includes(searchTerm.toLowerCase());
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesFilter = filterType === "all" || property.type === filterType;
+    const matchesFilter =
+      filterCategory === "all" || service.category === filterCategory;
 
     return matchesSearch && matchesFilter;
   });
 
-  const handleDelete = (property: Property) => {
-    if (window.confirm(`Are you sure you want to delete "${property.name}"?`)) {
-      deleteProperty(property.id);
+  const handleDelete = (service: Service) => {
+    if (window.confirm(`Are you sure you want to delete "${service.name}"?`)) {
+      deleteService(service.id);
       toast({
-        title: "Property deleted",
-        description: `${property.name} has been removed from your listings.`,
+        title: "Service deleted",
+        description: `${service.name} has been removed from your offerings.`,
       });
     }
   };
 
-  const toggleActive = (property: Property) => {
-    updateProperty(property.id, { isActive: !property.isActive });
+  const toggleActive = (service: Service) => {
+    updateService(service.id, { isActive: !service.isActive });
     toast({
-      title: property.isActive ? "Property deactivated" : "Property activated",
-      description: `${property.name} is now ${
-        property.isActive ? "hidden from" : "visible to"
+      title: service.isActive ? "Service deactivated" : "Service activated",
+      description: `${service.name} is now ${
+        service.isActive ? "hidden from" : "visible to"
       } customers.`,
     });
   };
 
-  const propertyTypes = [
+  const serviceCategories = [
     "all",
-    "restaurant",
-    "bar",
-    "cafe",
-    "club",
-    "hotel",
+    "food",
+    "beverage",
+    "entertainment",
+    "wellness",
     "other",
   ];
 
@@ -85,15 +89,15 @@ const PropertiesList = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Properties</h1>
-          <p className="text-gray-600">Manage your venue listings</p>
+          <h1 className="text-2xl font-bold text-gray-900">Services</h1>
+          <p className="text-gray-600">Manage your service offerings</p>
         </div>
         <Button
-          onClick={() => router.push("/dashboard/properties/new")}
+          onClick={() => router.push("/dashboard/services/new")}
           className="bg-[#6BADA0]  cursor-pointer hover:bg-[#8E9196]"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Property
+          Add Service
         </Button>
       </div>
 
@@ -105,7 +109,7 @@ const PropertiesList = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search properties..."
+                  placeholder="Search services..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -115,15 +119,15 @@ const PropertiesList = () => {
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-400" />
               <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
                 className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
               >
-                {propertyTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type === "all"
-                      ? "All Types"
-                      : type.charAt(0).toUpperCase() + type.slice(1)}
+                {serviceCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category === "all"
+                      ? "All Categories"
+                      : category.charAt(0).toUpperCase() + category.slice(1)}
                   </option>
                 ))}
               </select>
@@ -132,61 +136,61 @@ const PropertiesList = () => {
         </CardContent>
       </Card>
 
-      {/* Properties Grid */}
-      {filteredProperties.length === 0 ? (
+      {/* Services Grid */}
+      {filteredServices.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm || filterType !== "all"
-                ? "No properties found"
-                : "No properties yet"}
+              {searchTerm || filterCategory !== "all"
+                ? "No services found"
+                : "No services yet"}
             </h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || filterType !== "all"
+              {searchTerm || filterCategory !== "all"
                 ? "Try adjusting your search or filter criteria"
-                : "Start by adding your first venue listing"}
+                : "Start by adding your first service offering"}
             </p>
-            {!searchTerm && filterType === "all" && (
+            {!searchTerm && filterCategory === "all" && (
               <Button
-                onClick={() => router.push("/dashboard/properties/new")}
+                onClick={() => router.push("/dashboard/services/new")}
                 className="bg-[#6BADA0]  cursor-pointer hover:bg-[#8E9196]"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Your First Property
+                Add Your First Service
               </Button>
             )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6">
-          {filteredProperties.map((property) => (
+          {filteredServices.map((service) => (
             <Card
-              key={property.id}
+              key={service.id}
               className="hover:shadow-md transition-shadow"
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <CardTitle className="text-xl">{property.name}</CardTitle>
+                      <CardTitle className="text-xl">{service.name}</CardTitle>
                       <Badge
-                        variant={property.isActive ? "default" : "secondary"}
+                        variant={service.isActive ? "default" : "secondary"}
                       >
-                        {property.isActive ? "Active" : "Inactive"}
+                        {service.isActive ? "Active" : "Inactive"}
                       </Badge>
-                      <Badge variant="outline">{property.type}</Badge>
+                      <Badge variant="outline">{service.category}</Badge>
                     </div>
                     <div className="flex items-center text-gray-600 mb-2">
-                      <MapPin className="h-4 w-4 mr-1" />
+                      <Tag className="h-4 w-4 mr-1" />
                       <span className="text-sm">
-                        {property.address}, {property.city}, {property.state}
+                        {service.duration} minutes • ${service.price}
                       </span>
                     </div>
                     <div className="flex items-center text-gray-600">
-                      <Users className="h-4 w-4 mr-1" />
+                      <Calendar className="h-4 w-4 mr-1" />
                       <span className="text-sm">
-                        Capacity: {property.capacity}
+                        Available: {service?.availability?.join(", ")}
                       </span>
                     </div>
                   </div>
@@ -195,9 +199,9 @@ const PropertiesList = () => {
                       variant="outline"
                       className="cursor-pointer"
                       size="sm"
-                      onClick={() => toggleActive(property)}
+                      onClick={() => toggleActive(service)}
                     >
-                      {property.isActive ? (
+                      {service.isActive ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
                         <Eye className="h-4 w-4" />
@@ -208,7 +212,7 @@ const PropertiesList = () => {
                       className="cursor-pointer"
                       size="sm"
                       onClick={() =>
-                        router.push(`/dashboard/properties/${property.id}/edit`)
+                        router.push(`/dashboard/services/${service.id}/edit`)
                       }
                     >
                       <Edit className="h-4 w-4" />
@@ -216,7 +220,7 @@ const PropertiesList = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(property)}
+                      onClick={() => handleDelete(service)}
                       className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -226,37 +230,15 @@ const PropertiesList = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {property.description}
+                  {service.description}
                 </p>
 
-                {property.amenities.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">
-                      Amenities
-                    </h4>
-                    <div className="flex flex-wrap gap-1">
-                      {property.amenities.slice(0, 5).map((amenity, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {amenity}
-                        </Badge>
-                      ))}
-                      {property.amenities.length > 5 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{property.amenities.length - 5} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>Price Range: {property.priceRange}</span>
                   <span>
-                    Updated: {new Date(property.updatedAt).toLocaleDateString()}
+                    Min. Age: {service.minAge ? `${service.minAge}+` : "None"}
+                  </span>
+                  <span>
+                    Updated: {new Date(service.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
               </CardContent>
@@ -268,4 +250,4 @@ const PropertiesList = () => {
   );
 };
 
-export default PropertiesList;
+export default ServicesList;
