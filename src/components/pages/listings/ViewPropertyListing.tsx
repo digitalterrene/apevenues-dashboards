@@ -22,6 +22,7 @@ import AmenityIcon from "./AmenityIcon";
 import Header from "@/components/layout/header";
 import BookingModal from "@/components/booking/BookingModal";
 import PropertyGallery from "./PropertyGallery";
+import PropertyMap from "./PropertyMap";
 
 const ViewPropertyListing = () => {
   const { id } = useParams();
@@ -324,10 +325,12 @@ const ViewPropertyListing = () => {
                 </div>
                 <div className="h-64 bg-muted rounded-lg overflow-hidden">
                   {/* Map placeholder - replace with actual map component */}
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-muted-foreground">
-                    <MapPin className="h-8 w-8" />
-                    <span className="ml-2">Map View</span>
-                  </div>
+                  <PropertyMap
+                    address={property.address}
+                    city={property.city}
+                    province={property.province}
+                    zipCode={property.zipCode}
+                  />
                 </div>
               </div>
             </CardContent>
