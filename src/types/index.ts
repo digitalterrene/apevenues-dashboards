@@ -1,3 +1,5 @@
+import { Service } from "./service";
+
 export interface Property {
   id: string;
   name: string;
@@ -17,6 +19,7 @@ export interface Property {
   createdAt: string;
   updatedAt: string;
   user_id: string;
+  services?: Service[];
 }
 
 export interface BusinessProfile {
