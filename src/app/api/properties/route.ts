@@ -124,7 +124,10 @@ export async function GET(request: Request) {
     const collection = db.collection<Property>("properties");
 
     // Build query
-    const query: any = { isActive: true };
+    let query: any = {};
+    if (!fetchMyProperties) {
+      query.isActive = true;
+    }
 
     // Add search filter if search term exists
     if (searchTerm) {

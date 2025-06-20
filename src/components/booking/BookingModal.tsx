@@ -21,11 +21,23 @@ import { format } from "date-fns";
 import { Property } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface BookingModalProps {
   property: Property;
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface SelectedService {
+  id: string;
+  name: string;
+  price: number;
+  duration: string;
+  description?: string;
+  image?: string;
+  category: string;
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({
@@ -41,8 +53,36 @@ const BookingModal: React.FC<BookingModalProps> = ({
     specialRequests: "",
   });
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedServices, setSelectedServices] = useState<SelectedService[]>(
+    []
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
+  // console.log({ services: property.services });
+  const handleServiceToggle = (service: SelectedService) => {
+    setSelectedServices((prev) => {
+      const existingIndex = prev.findIndex((s) => s.id === service.id);
+      if (existingIndex >= 0) {
+        return prev.filter((s) => s.id !== service.id);
+      } else {
+        return [
+          ...prev,
+          {
+            ...service,
+            description: service.description,
+            image: service?.image,
+          },
+        ];
+      }
+    });
+  };
+
+  const calculateTotalServiceCost = () => {
+    return selectedServices.reduce(
+      (total, service) => total + service.price,
+      0
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +116,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
         eventDate: selectedDate.toISOString(),
         guestCount: parseInt(formData.guestCount),
         specialRequests: formData.specialRequests,
+        selectedServices: selectedServices,
+        totalServiceCost: calculateTotalServiceCost(),
       };
 
       // Pre-fill user info if logged in
@@ -126,6 +168,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
       specialRequests: "",
     });
     setSelectedDate(undefined);
+    setSelectedServices([]);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -253,6 +296,60 @@ const BookingModal: React.FC<BookingModalProps> = ({
               />
             </div>
           </div>
+
+          {/* Services Section */}
+          {property.services && property.services.length > 0 && (
+            <div className="space-y-3 ">
+              <Label>Available Services</Label>
+              <div className="space-y-2   mt-2">
+                {property.services.map((service) => (
+                  <div
+                    key={service.id}
+                    className="flex items-start shadow border-1 p-2 rounded-lg space-x-3"
+                  >
+                    <Checkbox
+                      id={`service-${service.id}`}
+                      checked={selectedServices.some(
+                        (s) => s.id === service.id
+                      )}
+                      onCheckedChange={() =>
+                        handleServiceToggle({
+                          id: service.id,
+                          name: service.name,
+                          price: service.price,
+                          duration: service.duration,
+                          description: service.description,
+                          image: service?.image,
+                          category: service?.category,
+                        })
+                      }
+                    />
+                    <div className="flex-1">
+                      <Label
+                        htmlFor={`service-${service.id}`}
+                        className="flex items-center justify-between"
+                      >
+                        <span>{service.name}</span>
+                        <span className="font-medium">
+                          R{service.price} / {service.duration}
+                        </span>
+                      </Label>
+                      <div className="flex items-center mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {service.category}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {selectedServices.length > 0 && (
+                <div className="text-right font-medium">
+                  Total Services Cost: R{calculateTotalServiceCost()}
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <Label htmlFor="specialRequests">Special Requests</Label>

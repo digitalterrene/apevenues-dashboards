@@ -30,16 +30,25 @@ export default function Header() {
               <Search className="h-4 w-4 mr-2" />
               Find Venues
             </Button>
-            <Link href={user?._id ? "/login" : "dashboard"}>
-              <Button variant="outline" className="cursor-pointer">
-                Sign In
+            <Link href={!(user?._id || user?.id) ? "/login" : "/dashboard"}>
+              <Button
+                variant={!(user?._id || user?.id) ? "outline" : "default"}
+                className={`cursor-pointer ${
+                  user?._id || user?.id
+                    ? "bg-[#6BADA0] cursor-pointer hover:bg-[#6BADA0]/60 hover:text-black "
+                    : ""
+                }`}
+              >
+                {!(user?._id || user?.id) ? "Sign In" : "Go To Dashboard"}
               </Button>
             </Link>
-            <Link href="/signup">
-              <Button className="bg-[#6BADA0] cursor-pointer hover:bg-[#6BADA0]/60 hover:text-black ">
-                List Your Venue
-              </Button>
-            </Link>
+            {!(user?._id || user?.id) && (
+              <Link href="/signup">
+                <Button className="bg-[#6BADA0] cursor-pointer hover:bg-[#6BADA0]/60 hover:text-black ">
+                  List Your Venue
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

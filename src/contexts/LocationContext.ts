@@ -7,7 +7,6 @@ export const useLocationContext = create((set: any) => ({
     zipCode: "",
     province: "",
   },
-
   setInputs: (newInputs: any) =>
     set((state: any) => ({
       inputs: {
@@ -15,4 +14,6 @@ export const useLocationContext = create((set: any) => ({
         ...newInputs,
       },
     })),
+  clearLocation: () =>
+    set({ setInputs: { address: "", city: "", zipCode: "", province: "" } }),
 }));

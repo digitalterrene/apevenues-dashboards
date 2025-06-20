@@ -43,12 +43,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import AddServicesToProperty from "./AddServicesToProperty";
+import { useServicesContext } from "@/contexts/ServicesContext";
 
 const PropertyForm = () => {
   const id = useSearchParams().get("id");
   const isEditing = Boolean(id);
   const { user } = useAuth();
   const { properties, addProperty, updateProperty } = useProperties();
+
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const { inputs: locationData } = useLocationContext();
@@ -68,7 +71,6 @@ const PropertyForm = () => {
     user_id: user?.id || (user?._id as string),
     isActive: true,
   });
-  const [newAmenity, setNewAmenity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState({
     address: "",
@@ -115,16 +117,6 @@ const PropertyForm = () => {
     }));
   };
 
-  const handleAddAmenity = () => {
-    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        amenities: [...prev.amenities, newAmenity.trim()],
-      }));
-      setNewAmenity("");
-    }
-  };
-
   const handleRemoveAmenity = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -140,6 +132,7 @@ const PropertyForm = () => {
         ...formData,
         ...location,
         capacity: parseInt(formData.capacity) || 0,
+        services: useServicesContext.getState().selectedServices,
       };
 
       if (isEditing && id) {
@@ -156,7 +149,14 @@ const PropertyForm = () => {
       setIsLoading(false);
     }
   };
-
+  useEffect(() => {
+    return () => {
+      // Clear location when component unmounts
+      useLocationContext.getState().clearLocation();
+      // Clear services when component unmounts
+      useServicesContext.getState().clearServices();
+    };
+  }, []);
   const handleLocationChange = (newLocation: {
     address: string;
     city: string;
@@ -303,7 +303,12 @@ const PropertyForm = () => {
       return undefined;
     }
   };
-
+  // Clear services when component unmounts
+  useEffect(() => {
+    return () => {
+      useServicesContext.getState().clearServices();
+    };
+  }, []);
   return (
     <div className="space-y-6">
       <div className="flex w-full justify-between items-start gap-4">
@@ -685,6 +690,8 @@ const PropertyForm = () => {
             )}
           </CardContent>
         </Card>
+        {/* Services Available */}
+        <AddServicesToProperty propertyId={id || "new"} />
         {/* Settings */}
         <Card>
           <CardHeader>
