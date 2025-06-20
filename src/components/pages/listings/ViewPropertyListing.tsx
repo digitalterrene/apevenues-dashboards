@@ -332,7 +332,7 @@ const ViewPropertyListing = () => {
                                 R{service.price} / {service.duration}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm line-clamp-4 text-gray-600 mt-1">
                               {service.description}
                             </p>
                             <div className="flex items-center gap-2 mt-3">
