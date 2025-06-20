@@ -1,6 +1,6 @@
 // src/components/AddServicesToProperty.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -63,24 +63,18 @@ const durationOptions = [
   { value: "unit", label: "Per Unit" },
 ];
 
-const fileTypes = ["JPG", "PNG", "JPEG", "WEBP"];
-
 interface AddServicesToPropertyProps {
   propertyId: string;
 }
-const MAX_IMAGES = 1;
+
 const AddServicesToProperty = ({ propertyId }: AddServicesToPropertyProps) => {
   const { services, isLoading } = useServices();
   const { selectedServices, addService, removeService, updateService } =
     useServicesContext();
-  const [formData, setFormData] = useState({
-    images: [] as string[],
-  });
-  const [uploadingImages, setUploadingImages] = useState(false);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [isAddingCustom, setIsAddingCustom] = useState(false);
-  const [imagePreview, setImagePreview] = useState("");
+  const [customServiceImage, setCustomServiceImage] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [customServiceData, setCustomServiceData] = useState({
     name: "",
@@ -88,10 +82,10 @@ const AddServicesToProperty = ({ propertyId }: AddServicesToPropertyProps) => {
     price: 0,
     duration: "hour",
     category: "other",
-    image: "",
+    image: "/services/service-placeholder.jpg",
   });
 
-  const handleServiceSelect = (service: Service) => {
+  const handleServiceSelect = (service: any) => {
     if (selectedServices.some((s) => s.id === service.id)) {
       removeService(service.id);
     } else {
@@ -102,10 +96,7 @@ const AddServicesToProperty = ({ propertyId }: AddServicesToPropertyProps) => {
         price: service.price,
         duration: service.duration,
         category: service.category,
-        image:
-          service.images?.[0] ||
-          service.image ||
-          "/services/service-placeholder.jpg",
+        image: service.images?.[0] || "/services/service-placeholder.jpg",
         isCustom: false,
       });
     }
@@ -128,95 +119,6 @@ const AddServicesToProperty = ({ propertyId }: AddServicesToPropertyProps) => {
     }));
   };
 
-  // Add these functions to handle image uploads
-  const handleImageChange = async (files: FileList) => {
-    if (formData.images.length + files.length > MAX_IMAGES) {
-      toast.error(`Maximum ${MAX_IMAGES} images allowed`);
-      return;
-    }
-
-    setUploadingImages(true);
-
-    try {
-      const uploadPromises = Array.from(files).map((file) =>
-        handleUploadImage(file, "property")
-      );
-
-      const results = await Promise.all(uploadPromises);
-      const newImageUrls = results.filter(
-        (url) => url !== undefined
-      ) as string[];
-
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...newImageUrls],
-      }));
-
-      // Generate previews for new images
-      const newPreviews = await Promise.all(
-        Array.from(files).map((file) => createImagePreview(file))
-      );
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
-    } catch (error) {
-      console.error("Error uploading images:", error);
-      toast.error("Error uploading some images");
-    } finally {
-      setUploadingImages(false);
-    }
-  };
-
-  const createImagePreview = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleRemoveImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Update your handleUploadImage function
-  const handleUploadImage = async (
-    image: File | Blob,
-    imageType: string
-  ): Promise<string | undefined> => {
-    const toastId = toast.loading("Uploading image...");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", image);
-
-      const res = await fetch("/api/upload-image", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        // Check for both possible response formats
-        const imageUrl = data.secure_url || data.imgUrl;
-        if (imageUrl) {
-          toast.success("Image uploaded successfully", { id: toastId });
-          return imageUrl;
-        }
-        throw new Error("No image URL returned");
-      } else {
-        throw new Error(data.error?.message || "Failed to upload image");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Upload failed", { id: toastId });
-      console.error("Upload error:", error);
-      return undefined;
-    }
-  };
-
   const handleAddCustomService = () => {
     if (!customServiceData.name.trim()) {
       toast.error("Service name is required");
@@ -226,10 +128,6 @@ const AddServicesToProperty = ({ propertyId }: AddServicesToPropertyProps) => {
     const newService = {
       id: `custom-${Date.now()}`,
       ...customServiceData,
-      image:
-        formData.images?.[0] ||
-        customServiceData.image ||
-        "/services/service-placeholder.jpg",
       isCustom: true,
     };
 
@@ -241,15 +139,81 @@ const AddServicesToProperty = ({ propertyId }: AddServicesToPropertyProps) => {
       price: 0,
       duration: "hour",
       category: "other",
-      image: "",
+      image: "/services/service-placeholder.jpg",
     });
-    setImagePreview("");
+    setCustomServiceImage("");
+  };
+
+  // Update the handleImageChange and handleUploadImage functions in AddServicesToProperty.tsx
+
+  const handleImageChange = async (files: FileList) => {
+    if (files.length === 0) return;
+    setUploadingImage(true);
+
+    try {
+      const file = files[0];
+      const imageUrl = await handleUploadImage(file);
+      if (imageUrl) {
+        setCustomServiceData((prev) => ({ ...prev, image: imageUrl }));
+        setCustomServiceImage(URL.createObjectURL(file));
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Error uploading image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleUploadImage = async (file: File): Promise<string | undefined> => {
+    const toastId = toast.loading("Uploading image...");
+    try {
+      const formData = new FormData();
+      formData.append("file", file); // Make sure the field name matches your API expectation
+
+      const res = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+        // Don't set Content-Type header - let the browser set it with the proper boundary
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to upload image");
+      }
+
+      const data = await res.json();
+      const imageUrl = data.secure_url || data.imgUrl;
+      if (!imageUrl) throw new Error("No image URL returned");
+
+      toast.success("Image uploaded successfully", { id: toastId });
+      return imageUrl;
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed", { id: toastId });
+      console.error("Upload error:", error);
+      return undefined;
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setCustomServiceData((prev) => ({
+      ...prev,
+      image: "/services/service-placeholder.jpg",
+    }));
+    setCustomServiceImage("");
+  };
+
+  const handleUpdateService = (
+    serviceId: string,
+    updates: Partial<Service>
+  ) => {
+    updateService(serviceId, updates);
   };
 
   if (isLoading) {
     return <div>Loading services...</div>;
   }
-  console.log({ selectedServices });
+
   return (
     <Card>
       <CardHeader>
@@ -417,58 +381,50 @@ const AddServicesToProperty = ({ propertyId }: AddServicesToPropertyProps) => {
 
             <div className="space-y-2">
               <Label>Service Image</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {/* Existing image previews */}
-                {formData.images.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={imagePreviews[index] || image}
-                      alt={`Property image ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(index)}
-                      className="absolute cursor-pointer  top-2 right-2 bg-red-500 text-white p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Upload area */}
-                {formData.images.length < MAX_IMAGES && (
-                  <FileUploader
-                    multiple={true}
-                    handleChange={handleImageChange}
-                    name="file"
-                    types={fileTypes}
-                    disabled={uploadingImages}
+              {customServiceData.image &&
+              customServiceData.image !==
+                "/services/service-placeholder.jpg" ? (
+                <div className="relative group">
+                  <img
+                    src={customServiceImage || customServiceData.image}
+                    alt="Service preview"
+                    className="w-full max-w-xs h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors p-4">
-                      {uploadingImages ? (
-                        <div className="text-center">
-                          <p>Uploading...</p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <ImagePlus className="mx-auto h-10 w-10 text-gray-400" />
-                          <p className="mt-2 text-sm text-gray-600">
-                            Drag & drop images here
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            or click to browse files
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            JPG, PNG, GIF, WEBP (max{" "}
-                            {MAX_IMAGES - formData.images.length} more)
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </FileUploader>
-                )}
-              </div>
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <FileUploader
+                  multiple={false}
+                  handleChange={handleImageChange}
+                  name="file"
+                  types={["JPG", "PNG", "JPEG", "WEBP"]}
+                  disabled={uploadingImage}
+                >
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors p-4">
+                    {uploadingImage ? (
+                      <div className="text-center">
+                        <p>Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <ImagePlus className="mx-auto h-10 w-10 text-gray-400" />
+                        <p className="mt-2 text-sm text-gray-600">
+                          Drag & drop image here
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          or click to browse file
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </FileUploader>
+              )}
             </div>
 
             <div className="flex justify-end">

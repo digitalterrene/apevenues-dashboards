@@ -51,6 +51,7 @@ const PropertyForm = () => {
   const isEditing = Boolean(id);
   const { user } = useAuth();
   const { properties, addProperty, updateProperty } = useProperties();
+
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const { inputs: locationData } = useLocationContext();
@@ -70,7 +71,6 @@ const PropertyForm = () => {
     user_id: user?.id || (user?._id as string),
     isActive: true,
   });
-  const [newAmenity, setNewAmenity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState({
     address: "",
@@ -117,16 +117,6 @@ const PropertyForm = () => {
     }));
   };
 
-  const handleAddAmenity = () => {
-    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        amenities: [...prev.amenities, newAmenity.trim()],
-      }));
-      setNewAmenity("");
-    }
-  };
-
   const handleRemoveAmenity = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -159,7 +149,14 @@ const PropertyForm = () => {
       setIsLoading(false);
     }
   };
-
+  useEffect(() => {
+    return () => {
+      // Clear location when component unmounts
+      useLocationContext.getState().clearLocation();
+      // Clear services when component unmounts
+      useServicesContext.getState().clearServices();
+    };
+  }, []);
   const handleLocationChange = (newLocation: {
     address: string;
     city: string;

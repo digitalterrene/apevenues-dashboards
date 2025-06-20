@@ -15,6 +15,7 @@ export interface Service extends ServiceInput {
   user_id: string;
   createdAt: Date;
   updatedAt: Date;
+  image: string;
   isActive: boolean; // Now required in Service (optional in ServiceInput)
 }
 

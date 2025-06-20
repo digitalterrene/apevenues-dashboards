@@ -43,6 +43,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import AddServicesToProperty from "./AddServicesToProperty";
+import { useServicesContext } from "@/contexts/ServicesContext";
+import { Service } from "@/types/service";
 
 const PropertyEditForm = ({ id }: { id: string }) => {
   const isEditing = Boolean(id);
@@ -53,6 +56,8 @@ const PropertyEditForm = ({ id }: { id: string }) => {
   const [open, setOpen] = useState(false);
   const { inputs: locationData, setInputs: setPropertyInputs } =
     useLocationContext();
+  //later used to initialize the poperty.services after the sate has been updated in the use effect
+  const { selectedServices } = useServicesContext();
   const [formData, setFormData] = useState({
     name: "",
     type: "restaurant" as Property["type"],
@@ -82,6 +87,9 @@ const PropertyEditForm = ({ id }: { id: string }) => {
     const property = await getPropertyById(id);
     console.log({ property });
     if (property) {
+      // Clear existing services first
+      useServicesContext.getState().clearServices();
+
       setFormData({
         name: property?.name,
         type: property?.type,
@@ -98,12 +106,27 @@ const PropertyEditForm = ({ id }: { id: string }) => {
         isActive: property?.isActive,
         user_id: property?.user_id,
       });
+
       setPropertyInputs({
         address: property?.address,
         city: property?.city,
         province: property?.province,
         zipCode: property?.zipCode,
       });
+
+      // Add services only if they exist
+
+      if (property?.services) {
+        property.services.forEach((service: Service) => {
+          if (
+            !useServicesContext
+              .getState()
+              .selectedServices.some((s) => s.id === service.id)
+          ) {
+            useServicesContext.getState().addService(service);
+          }
+        });
+      }
     }
   };
   useEffect(() => {
@@ -123,16 +146,6 @@ const PropertyEditForm = ({ id }: { id: string }) => {
     }));
   };
 
-  const handleAddAmenity = () => {
-    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        amenities: [...prev.amenities, newAmenity.trim()],
-      }));
-      setNewAmenity("");
-    }
-  };
-
   const handleRemoveAmenity = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -146,19 +159,34 @@ const PropertyEditForm = ({ id }: { id: string }) => {
       const propertyData: any = {
         ...formData,
         ...location,
+        address: location?.address || locationData?.address,
+        city: location?.city || locationData?.city,
+        province: location?.province || locationData?.province,
+        zipCode: location?.zipCode || locationData?.zipCode,
         capacity: parseInt(formData.capacity) || 0,
+        services: useServicesContext.getState().selectedServices,
       };
 
       await updateProperty(id, propertyData);
       setTimeout(() => {
-        router.push("/dashboard/properties");
+        router.refresh();
+        setTimeout(() => {
+          router.push("/dashboard/properties");
+        }, 500);
       }, 1000); // Small delay to allow toast to be seen
     } catch (error) {
     } finally {
       setIsLoading(false);
     }
   };
-
+  useEffect(() => {
+    return () => {
+      // Clear location when component unmounts
+      useLocationContext.getState().clearLocation();
+      // Clear services when component unmounts
+      useServicesContext.getState().clearServices();
+    };
+  }, []);
   const handleLocationChange = (newLocation: {
     address: string;
     city: string;
@@ -687,6 +715,9 @@ const PropertyEditForm = ({ id }: { id: string }) => {
             )}
           </CardContent>
         </Card>
+
+        {/* Services Available */}
+        <AddServicesToProperty propertyId={id} />
         {/* Settings */}
         <Card>
           <CardHeader>
