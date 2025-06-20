@@ -35,6 +35,8 @@ interface SelectedService {
   name: string;
   price: number;
   duration: string;
+  description?: string;
+  image?: string;
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({
@@ -62,7 +64,14 @@ const BookingModal: React.FC<BookingModalProps> = ({
       if (existingIndex >= 0) {
         return prev.filter((s) => s.id !== service.id);
       } else {
-        return [...prev, service];
+        return [
+          ...prev,
+          {
+            ...service,
+            description: service.description,
+            image: service?.image,
+          },
+        ];
       }
     });
   };
