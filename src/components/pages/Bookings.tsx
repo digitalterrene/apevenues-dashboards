@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import {
   Card,
   CardContent,
@@ -32,8 +32,11 @@ import {
 import { format } from "date-fns";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
+import { Service } from "@/types/service";
 
 interface BookingRequest {
+  totalServiceCost: ReactNode;
+  selectedServices: any;
   id: string;
   propertyId: string;
   propertyName: string;
@@ -158,7 +161,7 @@ const Bookings = () => {
   useEffect(() => {
     filterBookings();
   }, [bookings, searchTerm, statusFilter]);
-
+  console.log({ bookings });
   const filterBookings = () => {
     let filtered = bookings;
 
@@ -378,6 +381,48 @@ const Bookings = () => {
                     </div>
                   </div>
                 </div>
+                {/* Selected services */}
+                {booking?.selectedServices?.length > 0 && (
+                  <div className="mt-10">
+                    <div className="flex justify-between">
+                      <h4 className="font-medium text-sm text-gray-900 mb-1">
+                        Services Requested
+                      </h4>
+                      <Badge className="text-sm bg-[#6BADA0]  font-medium">
+                        R{booking?.totalServiceCost}
+                      </Badge>{" "}
+                    </div>
+                    <div className="grid gap-4 grid-cols-3">
+                      {booking?.selectedServices?.map((service: Service) => (
+                        <div key={service.id} className="border rounded-lg p-4">
+                          <div className="grid grid-cols-3 h-full items-start gap-4">
+                            <img
+                              src={service.image}
+                              alt={service.name}
+                              className="h-full w-full object-cover rounded-md flex-shrink-0"
+                            />
+                            <div className="flex-1 col-span-2">
+                              <div className="flex justify-between items-start">
+                                <h5 className="font-medium">{service.name}</h5>
+                              </div>
+                              <p className="text-sm line-clamp-4 text-gray-600 mt-1">
+                                {service.description}
+                              </p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="outline">
+                                  {service.category}
+                                </Badge>
+                                <span className="text-sm font-medium">
+                                  R{service.price} / {service.duration}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {booking?.specialRequests && (
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg">

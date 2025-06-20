@@ -37,6 +37,7 @@ interface SelectedService {
   duration: string;
   description?: string;
   image?: string;
+  category: string;
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({
@@ -57,7 +58,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
-
+  // console.log({ services: property.services });
   const handleServiceToggle = (service: SelectedService) => {
     setSelectedServices((prev) => {
       const existingIndex = prev.findIndex((s) => s.id === service.id);
@@ -317,6 +318,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
                           name: service.name,
                           price: service.price,
                           duration: service.duration,
+                          description: service.description,
+                          image: service?.image,
+                          category: service?.category,
                         })
                       }
                     />

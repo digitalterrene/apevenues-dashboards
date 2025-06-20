@@ -30,7 +30,7 @@ export default function Header() {
               <Search className="h-4 w-4 mr-2" />
               Find Venues
             </Button>
-            <Link href={!(user?._id || user?.id) ? "/login" : "dashboard"}>
+            <Link href={!(user?._id || user?.id) ? "/login" : "/dashboard"}>
               <Button
                 variant={!(user?._id || user?.id) ? "outline" : "default"}
                 className={`cursor-pointer ${
