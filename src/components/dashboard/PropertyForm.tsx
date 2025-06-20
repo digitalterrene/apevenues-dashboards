@@ -43,6 +43,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import AddServicesToProperty from "./AddServicesToProperty";
+import { useServicesContext } from "@/contexts/ServicesContext";
 
 const PropertyForm = () => {
   const id = useSearchParams().get("id");
@@ -140,6 +142,7 @@ const PropertyForm = () => {
         ...formData,
         ...location,
         capacity: parseInt(formData.capacity) || 0,
+        services: useServicesContext.getState().selectedServices,
       };
 
       if (isEditing && id) {
@@ -303,7 +306,12 @@ const PropertyForm = () => {
       return undefined;
     }
   };
-
+  // Clear services when component unmounts
+  useEffect(() => {
+    return () => {
+      useServicesContext.getState().clearServices();
+    };
+  }, []);
   return (
     <div className="space-y-6">
       <div className="flex w-full justify-between items-start gap-4">
@@ -685,6 +693,8 @@ const PropertyForm = () => {
             )}
           </CardContent>
         </Card>
+        {/* Services Available */}
+        <AddServicesToProperty propertyId={id || "new"} />
         {/* Settings */}
         <Card>
           <CardHeader>
