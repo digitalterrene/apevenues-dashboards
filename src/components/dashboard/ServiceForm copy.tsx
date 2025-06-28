@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploader } from "react-drag-drop-files";
-import { ImagePlus, Trash2, ArrowLeft, Check } from "lucide-react";
+import { ImagePlus, Trash2, ArrowLeft } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,14 +16,14 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useServices } from "@/hooks/userServices";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../ui/accordion";
-import { serviceTypes } from "@/lib/data/service-types";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useServices } from "@/hooks/userServices";
 
 interface Service {
   id?: string;
@@ -44,7 +44,7 @@ export const ServiceFormComponent = () => {
 
   // Constants
   const fileTypes = ["JPG", "PNG", "JPEG", "WEBP"];
-  const MAX_IMAGES = 5;
+  const MAX_IMAGES = 5; // Reduced from PropertyForm's 10 since services might need fewer images
 
   // State
   const [formData, setFormData] = useState<Service>({
@@ -54,12 +54,20 @@ export const ServiceFormComponent = () => {
     duration: "hour",
     images: [],
     isActive: true,
-    category: "", // Changed from "other" to empty string
+    category: "other",
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  const serviceCategories = [
+    { value: "food", label: "Food & Beverage" },
+    { value: "equipment", label: "Equipment Rental" },
+    { value: "staff", label: "Staff Services" },
+    { value: "decor", label: "Decorations" },
+    { value: "other", label: "Other Services" },
+  ];
 
   const durationOptions = [
     { value: "hour", label: "Per Hour" },
@@ -74,7 +82,7 @@ export const ServiceFormComponent = () => {
       const service = services.find((s) => s.id === id);
       if (service) {
         setFormData(service);
-        setImagePreviews(service.images);
+        setImagePreviews(service.images); // Initialize with existing images
       }
     }
   }, [isEditing, id, services]);
@@ -96,69 +104,6 @@ export const ServiceFormComponent = () => {
     }));
   };
 
-  const handleServiceTypeSelect = (typeId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      category: typeId, // Update the category with the selected service type ID
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      if (isEditing && id) {
-        await updateService(id, formData);
-        toast.success("Service updated successfully");
-      } else {
-        await addService(formData);
-        toast.success("Service added successfully");
-      }
-
-      setTimeout(() => {
-        router.push("/dashboard/services");
-      }, 1000);
-    } catch (error) {
-      toast.error("Failed to save service");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUploadImage = async (
-    image: File
-  ): Promise<string | undefined> => {
-    const toastId = toast.loading("Uploading image...");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", image);
-      formData.append("upload_preset", "services");
-
-      const res = await fetch("/api/upload-image", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        const imageUrl = data.secure_url || data.url || data.imgUrl;
-        if (imageUrl) {
-          toast.success("Image uploaded successfully", { id: toastId });
-          return imageUrl;
-        }
-        throw new Error("No image URL returned");
-      } else {
-        throw new Error(data.error?.message || "Failed to upload image");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Upload failed", { id: toastId });
-      console.error("Upload error:", error);
-      return undefined;
-    }
-  };
   const createImagePreview = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -166,13 +111,7 @@ export const ServiceFormComponent = () => {
       reader.readAsDataURL(file);
     });
   };
-  const handleRemoveImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
+
   const handleImageChange = async (files: FileList) => {
     if (formData.images.length + files.length > MAX_IMAGES) {
       toast.error(`Maximum ${MAX_IMAGES} images allowed`);
@@ -182,10 +121,12 @@ export const ServiceFormComponent = () => {
     setUploadingImages(true);
 
     try {
+      // Create previews first for better UX
       const newPreviews = await Promise.all(
         Array.from(files).map((file) => createImagePreview(file))
       );
 
+      // Then upload the actual images
       const uploadPromises = Array.from(files).map((file) =>
         handleUploadImage(file)
       );
@@ -212,9 +153,74 @@ export const ServiceFormComponent = () => {
       setUploadingImages(false);
     }
   };
+
+  const handleUploadImage = async (
+    image: File
+  ): Promise<string | undefined> => {
+    const toastId = toast.loading("Uploading image...");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", image);
+      formData.append("upload_preset", "services"); // Cloudinary preset if using
+
+      const res = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const imageUrl = data.secure_url || data.url || data.imgUrl;
+        if (imageUrl) {
+          toast.success("Image uploaded successfully", { id: toastId });
+          return imageUrl;
+        }
+        throw new Error("No image URL returned");
+      } else {
+        throw new Error(data.error?.message || "Failed to upload image");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed", { id: toastId });
+      console.error("Upload error:", error);
+      return undefined;
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (isEditing && id) {
+        await updateService(id, formData);
+        toast.success("Service updated successfully");
+      } else {
+        await addService(formData);
+        toast.success("Service added successfully");
+      }
+
+      setTimeout(() => {
+        router.push("/dashboard/services");
+      }, 1000);
+    } catch (error) {
+      toast.error("Failed to save service");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header and Back Button */}
       <div className="flex w-full justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -260,18 +266,24 @@ export const ServiceFormComponent = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">Price *</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  placeholder="0"
-                  value={formData.price}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  required
-                />
+                <Label htmlFor="category">Category *</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    handleSelectChange("category", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {serviceCategories.map((category) => (
+                      <SelectItem key={category.value} value={category.value}>
+                        {category.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -290,98 +302,41 @@ export const ServiceFormComponent = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="price">Price *</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  placeholder="0"
+                  value={formData.price}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="duration">Pricing Duration *</Label>
-                <select
+                <Select
                   value={formData.duration}
-                  onChange={(e) =>
-                    handleSelectChange("duration", e.target.value)
+                  onValueChange={(value) =>
+                    handleSelectChange("duration", value)
                   }
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {durationOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durationOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
-        </Card>
-
-        {/* Service Type Selection */}
-        <Card>
-          <Accordion
-            type="single"
-            collapsible
-            className="w-full py-0 pr-6"
-            defaultValue="item-1"
-          >
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-xl border-none hover:border-none">
-                <CardHeader className="text-start py-0">
-                  <CardTitle>Type of Event Service Provider</CardTitle>
-                  <CardDescription>
-                    Select the category and specific type for your service
-                    {formData.category && (
-                      <span className="ml-2 text-blue-500">
-                        Selected:{formData?.category}
-                      </span>
-                    )}
-                  </CardDescription>
-                </CardHeader>
-              </AccordionTrigger>
-              <AccordionContent className="flex flex-col gap-4 text-balance">
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6">
-                    {serviceTypes.map((group) => (
-                      <div key={group.category} className="space-y-3">
-                        <h3 className="font-semibold text-lg">
-                          {group.category}
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {group.types.map((type) => (
-                            <div
-                              key={type.id}
-                              onClick={() => handleServiceTypeSelect(type.id)}
-                              className={`
-                                border rounded-lg p-4 cursor-pointer transition-all
-                                hover:border-blue-500 hover:bg-blue-50
-                                ${
-                                  formData.category === type.id
-                                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                                    : "border-gray-200"
-                                }
-                              `}
-                            >
-                              <div className="flex items-start gap-3">
-                                <img
-                                  src={`/service-types/${group.category}/${type.id}.jpg`}
-                                  className="w-20 object-cover object-center rounded-lg h-20"
-                                  alt={type.name}
-                                />
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{type.name}</h4>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {type.description}
-                                  </p>
-                                </div>
-                                {formData.category === type.id && (
-                                  <div className="text-blue-500">
-                                    <Check className="h-5 w-5" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </Card>
 
         {/* Service Images */}
@@ -394,6 +349,7 @@ export const ServiceFormComponent = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {/* Existing image previews */}
               {formData.images.map((image, index) => (
                 <div key={index} className="relative group">
                   <img
@@ -411,6 +367,7 @@ export const ServiceFormComponent = () => {
                 </div>
               ))}
 
+              {/* Upload area */}
               {formData.images.length < MAX_IMAGES && (
                 <FileUploader
                   multiple={true}
@@ -483,7 +440,7 @@ export const ServiceFormComponent = () => {
           <Button
             type="submit"
             className="bg-[#6BADA0] hover:bg-[#8E9196]"
-            disabled={isLoading || uploadingImages || !formData.category}
+            disabled={isLoading || uploadingImages}
           >
             {isLoading
               ? "Saving..."

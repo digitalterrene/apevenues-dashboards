@@ -17,13 +17,6 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useServices } from "@/hooks/userServices";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../ui/accordion";
-import { serviceTypes } from "@/lib/data/service-types";
 
 interface Service {
   id?: string;
@@ -35,6 +28,211 @@ interface Service {
   isActive: boolean;
   category: string;
 }
+
+// Define service types with categories
+const serviceTypes = [
+  {
+    category: "Beauty & Styling",
+    types: [
+      {
+        id: "makeup-artists",
+        name: "Makeup Artists",
+        description: "Professional makeup services for events",
+      },
+      {
+        id: "hair-stylists",
+        name: "Hair Stylists",
+        description: "Hair styling and treatment services",
+      },
+      {
+        id: "nail-technicians",
+        name: "Nail Technicians",
+        description: "Manicure and pedicure services",
+      },
+      {
+        id: "grooming-services",
+        name: "Grooming Services",
+        description: "Personal grooming and styling",
+      },
+    ],
+  },
+  {
+    category: "Entertainment",
+    types: [
+      { id: "djs", name: "DJs", description: "Music mixing and entertainment" },
+      {
+        id: "live-bands",
+        name: "Live Bands / Musicians",
+        description: "Live music performances",
+      },
+      {
+        id: "mcs",
+        name: "MCs / Hosts",
+        description: "Event hosting and announcements",
+      },
+      {
+        id: "dancers",
+        name: "Dancers / Entertainers",
+        description: "Performance artists and dancers",
+      },
+      {
+        id: "fireworks",
+        name: "Fireworks / Special Effects",
+        description: "Pyrotechnics and special effects",
+      },
+      {
+        id: "kids-entertainment",
+        name: "Kids' Entertainment",
+        description: "Activities and entertainment for children",
+      },
+    ],
+  },
+  {
+    category: "Catering & Bar",
+    types: [
+      {
+        id: "caterers",
+        name: "Caterers",
+        description: "Food service for events",
+      },
+      {
+        id: "private-chefs",
+        name: "Private Chefs",
+        description: "Custom culinary experiences",
+      },
+      {
+        id: "food-trucks",
+        name: "Mobile Food Trucks",
+        description: "Mobile food service",
+      },
+      {
+        id: "bartenders",
+        name: "Bartenders / Mobile Bars",
+        description: "Beverage service and bar setup",
+      },
+      {
+        id: "wait-staff",
+        name: "Wait Staff",
+        description: "Event serving staff",
+      },
+    ],
+  },
+  {
+    category: "Production & Setup",
+    types: [
+      {
+        id: "lighting-av",
+        name: "Lighting & AV Providers",
+        description: "Audiovisual equipment and setup",
+      },
+      {
+        id: "sound-engineers",
+        name: "Sound Engineers",
+        description: "Audio system professionals",
+      },
+      {
+        id: "stage-rigging",
+        name: "Stage and Rigging",
+        description: "Stage construction and rigging",
+      },
+      {
+        id: "power-supply",
+        name: "Generator / Power Supply",
+        description: "Power solutions for events",
+      },
+      {
+        id: "tent-hire",
+        name: "Tent / Marquee Hire",
+        description: "Temporary structures and tents",
+      },
+      {
+        id: "flooring-hire",
+        name: "Flooring / Carpet Hire",
+        description: "Flooring solutions",
+      },
+      {
+        id: "furniture-rentals",
+        name: "Furniture & Decor Rentals",
+        description: "Furniture and decoration rentals",
+      },
+    ],
+  },
+  {
+    category: "Decor & Design",
+    types: [
+      {
+        id: "florists",
+        name: "Florists",
+        description: "Floral arrangements and design",
+      },
+      {
+        id: "balloon-decor",
+        name: "Balloon & Prop Decor",
+        description: "Decorative balloons and props",
+      },
+      {
+        id: "event-stylists",
+        name: "Event Stylists / Designers",
+        description: "Event design and styling",
+      },
+      {
+        id: "tableware-linen",
+        name: "Tableware & Linen Hire",
+        description: "Table settings and linens",
+      },
+      {
+        id: "draping-setup",
+        name: "Draping & Stage Setup",
+        description: "Fabric draping and stage design",
+      },
+    ],
+  },
+  {
+    category: "Planning & Coordination",
+    types: [
+      {
+        id: "event-planners",
+        name: "Event Planners",
+        description: "Full event planning services",
+      },
+      {
+        id: "wedding-coordinators",
+        name: "Wedding Coordinators",
+        description: "Specialized wedding planning",
+      },
+      {
+        id: "day-coordinators",
+        name: "Day-of Coordinators",
+        description: "On-the-day event coordination",
+      },
+      {
+        id: "proposal-planners",
+        name: "Proposal Planners",
+        description: "Special proposal planning",
+      },
+    ],
+  },
+  {
+    category: "Stationery & Gifts",
+    types: [
+      {
+        id: "invitation-designers",
+        name: "Invitation Designers",
+        description: "Custom invitation design",
+      },
+      {
+        id: "digital-rsvp",
+        name: "Digital RSVP Services",
+        description: "Online RSVP management",
+      },
+      {
+        id: "custom-gifts",
+        name: "Custom Favors / Gifts",
+        description: "Personalized event gifts",
+      },
+    ],
+  },
+];
 
 export const ServiceFormComponent = () => {
   const id = useSearchParams().get("id");
@@ -54,7 +252,7 @@ export const ServiceFormComponent = () => {
     duration: "hour",
     images: [],
     isActive: true,
-    category: "", // Changed from "other" to empty string
+    category: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -99,66 +297,10 @@ export const ServiceFormComponent = () => {
   const handleServiceTypeSelect = (typeId: string) => {
     setFormData((prev) => ({
       ...prev,
-      category: typeId, // Update the category with the selected service type ID
+      category: typeId,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      if (isEditing && id) {
-        await updateService(id, formData);
-        toast.success("Service updated successfully");
-      } else {
-        await addService(formData);
-        toast.success("Service added successfully");
-      }
-
-      setTimeout(() => {
-        router.push("/dashboard/services");
-      }, 1000);
-    } catch (error) {
-      toast.error("Failed to save service");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUploadImage = async (
-    image: File
-  ): Promise<string | undefined> => {
-    const toastId = toast.loading("Uploading image...");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", image);
-      formData.append("upload_preset", "services");
-
-      const res = await fetch("/api/upload-image", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        const imageUrl = data.secure_url || data.url || data.imgUrl;
-        if (imageUrl) {
-          toast.success("Image uploaded successfully", { id: toastId });
-          return imageUrl;
-        }
-        throw new Error("No image URL returned");
-      } else {
-        throw new Error(data.error?.message || "Failed to upload image");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Upload failed", { id: toastId });
-      console.error("Upload error:", error);
-      return undefined;
-    }
-  };
   const createImagePreview = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -166,13 +308,7 @@ export const ServiceFormComponent = () => {
       reader.readAsDataURL(file);
     });
   };
-  const handleRemoveImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
+
   const handleImageChange = async (files: FileList) => {
     if (formData.images.length + files.length > MAX_IMAGES) {
       toast.error(`Maximum ${MAX_IMAGES} images allowed`);
@@ -212,9 +348,74 @@ export const ServiceFormComponent = () => {
       setUploadingImages(false);
     }
   };
+
+  const handleUploadImage = async (
+    image: File
+  ): Promise<string | undefined> => {
+    const toastId = toast.loading("Uploading image...");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", image);
+      formData.append("upload_preset", "services");
+
+      const res = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const imageUrl = data.secure_url || data.url || data.imgUrl;
+        if (imageUrl) {
+          toast.success("Image uploaded successfully", { id: toastId });
+          return imageUrl;
+        }
+        throw new Error("No image URL returned");
+      } else {
+        throw new Error(data.error?.message || "Failed to upload image");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed", { id: toastId });
+      console.error("Upload error:", error);
+      return undefined;
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (isEditing && id) {
+        await updateService(id, formData);
+        toast.success("Service updated successfully");
+      } else {
+        await addService(formData);
+        toast.success("Service added successfully");
+      }
+
+      setTimeout(() => {
+        router.push("/dashboard/services");
+      }, 1000);
+    } catch (error) {
+      toast.error("Failed to save service");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header and Back Button */}
       <div className="flex w-full justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -287,7 +488,69 @@ export const ServiceFormComponent = () => {
                 required
               />
             </div>
+          </CardContent>
+        </Card>
 
+        {/* Service Type Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Type of Event Service Provider</CardTitle>
+            <CardDescription>
+              Select the category and specific type for your service
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
+              {serviceTypes.map((group) => (
+                <div key={group.category} className="space-y-3">
+                  <h3 className="font-semibold text-lg">{group.category}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {group.types.map((type) => (
+                      <div
+                        key={type.id}
+                        onClick={() => handleServiceTypeSelect(type.id)}
+                        className={`
+                          border rounded-lg p-4 cursor-pointer transition-all
+                          hover:border-blue-500 hover:bg-blue-50
+                          ${
+                            formData.category === type.id
+                              ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                              : "border-gray-200"
+                          }
+                        `}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+                          <div className="flex-1">
+                            <h4 className="font-medium">{type.name}</h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {type.description}
+                            </p>
+                          </div>
+                          {formData.category === type.id && (
+                            <div className="text-blue-500">
+                              <Check className="h-5 w-5" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pricing Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pricing Details</CardTitle>
+            <CardDescription>
+              Configure pricing and duration for your service
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="duration">Pricing Duration *</Label>
@@ -307,81 +570,6 @@ export const ServiceFormComponent = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
-
-        {/* Service Type Selection */}
-        <Card>
-          <Accordion
-            type="single"
-            collapsible
-            className="w-full py-0 pr-6"
-            defaultValue="item-1"
-          >
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-xl border-none hover:border-none">
-                <CardHeader className="text-start py-0">
-                  <CardTitle>Type of Event Service Provider</CardTitle>
-                  <CardDescription>
-                    Select the category and specific type for your service
-                    {formData.category && (
-                      <span className="ml-2 text-blue-500">
-                        Selected:{formData?.category}
-                      </span>
-                    )}
-                  </CardDescription>
-                </CardHeader>
-              </AccordionTrigger>
-              <AccordionContent className="flex flex-col gap-4 text-balance">
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6">
-                    {serviceTypes.map((group) => (
-                      <div key={group.category} className="space-y-3">
-                        <h3 className="font-semibold text-lg">
-                          {group.category}
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {group.types.map((type) => (
-                            <div
-                              key={type.id}
-                              onClick={() => handleServiceTypeSelect(type.id)}
-                              className={`
-                                border rounded-lg p-4 cursor-pointer transition-all
-                                hover:border-blue-500 hover:bg-blue-50
-                                ${
-                                  formData.category === type.id
-                                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                                    : "border-gray-200"
-                                }
-                              `}
-                            >
-                              <div className="flex items-start gap-3">
-                                <img
-                                  src={`/service-types/${group.category}/${type.id}.jpg`}
-                                  className="w-20 object-cover object-center rounded-lg h-20"
-                                  alt={type.name}
-                                />
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{type.name}</h4>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {type.description}
-                                  </p>
-                                </div>
-                                {formData.category === type.id && (
-                                  <div className="text-blue-500">
-                                    <Check className="h-5 w-5" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </Card>
 
         {/* Service Images */}
