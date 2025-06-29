@@ -16,6 +16,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useServices } from "@/hooks/userServices";
 import {
   Accordion,
@@ -24,13 +31,6 @@ import {
   AccordionTrigger,
 } from "../ui/accordion";
 import { serviceTypes } from "@/lib/data/service-types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 
 interface Service {
   id?: string;
@@ -53,7 +53,7 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
 
   // Constants
   const fileTypes = ["JPG", "PNG", "JPEG", "WEBP"];
-  const MAX_IMAGES = 5;
+  const MAX_IMAGES = 5; // Services typically need fewer images than properties
 
   // State
   const [formData, setFormData] = useState<Service>({
@@ -63,7 +63,7 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
     duration: "hour",
     images: [],
     isActive: true,
-    category: "",
+    category: "other",
     requirements: [],
     minAge: undefined,
     availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
@@ -73,6 +73,14 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
+  const serviceCategories = [
+    { value: "food", label: "Food & Beverage" },
+    { value: "entertainment", label: "Entertainment" },
+    { value: "wellness", label: "Wellness" },
+    { value: "equipment", label: "Equipment Rental" },
+    { value: "other", label: "Other Services" },
+  ];
+
   const durationOptions = [
     { value: "hour", label: "Per Hour" },
     { value: "day", label: "Per Day" },
@@ -81,24 +89,13 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
     { value: "unit", label: "Per Unit" },
   ];
 
-  // Get all service types flattened for lookup
-  const allServiceTypes = serviceTypes.flatMap((group) => group.types);
-
   useEffect(() => {
     if (isEditing && id) {
       const fetchService = async () => {
         const service = await getServiceById(id);
         if (service) {
-          // For backward compatibility, check if category matches any service type
-          const matchedType = allServiceTypes.find(
-            (type) => type.id === service.category
-          );
-
-          setFormData({
-            ...service,
-            // If category doesn't match any service type, keep it as is (for backward compatibility)
-            category: matchedType ? service.category : service.category,
-          });
+          setFormData(service);
+          // Initialize image previews with existing images
           setImagePreviews(service.images || []);
         }
       };
@@ -122,52 +119,7 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
       [name]: value,
     }));
   };
-  const handleUploadImage = async (
-    image: File
-  ): Promise<string | undefined> => {
-    const toastId = toast.loading("Uploading image...");
-    try {
-      const formData = new FormData();
-      formData.append("file", image);
-      formData.append("upload_preset", "services"); // Cloudinary preset if using
 
-      const res = await fetch("/api/upload-image", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        const imageUrl = data.secure_url || data.url || data.imageUrl;
-        if (imageUrl) {
-          toast.success("Image uploaded successfully", { id: toastId });
-          return imageUrl;
-        }
-        throw new Error("No image URL returned");
-      } else {
-        throw new Error(data.error?.message || "Failed to upload image");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Upload failed", { id: toastId });
-      console.error("Upload error:", error);
-      return undefined;
-    }
-  };
-  const handleServiceTypeSelect = (typeId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      category: typeId,
-    }));
-  };
-
-  const handleRemoveImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
   const createImagePreview = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -175,6 +127,7 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
       reader.readAsDataURL(file);
     });
   };
+
   const handleImageChange = async (files: FileList) => {
     if (formData.images?.length + files?.length > MAX_IMAGES) {
       toast.error(`Maximum ${MAX_IMAGES} images allowed`);
@@ -216,19 +169,64 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
       setUploadingImages(false);
     }
   };
-  // Helper function to get the display name of the selected category
-  const getSelectedCategoryName = () => {
-    if (!formData.category) return "";
 
-    // First try to find in service types
-    const serviceType = allServiceTypes.find(
-      (type) => type.id === formData.category
-    );
-    if (serviceType) return serviceType.name;
+  const handleUploadImage = async (
+    image: File
+  ): Promise<string | undefined> => {
+    const toastId = toast.loading("Uploading image...");
+    try {
+      const formData = new FormData();
+      formData.append("file", image);
+      formData.append("upload_preset", "services"); // Cloudinary preset if using
 
-    // Fallback to the raw category value
-    return formData.category;
+      const res = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const imageUrl = data.secure_url || data.url || data.imageUrl;
+        if (imageUrl) {
+          toast.success("Image uploaded successfully", { id: toastId });
+          return imageUrl;
+        }
+        throw new Error("No image URL returned");
+      } else {
+        throw new Error(data.error?.message || "Failed to upload image");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed", { id: toastId });
+      console.error("Upload error:", error);
+      return undefined;
+    }
   };
+
+  const handleRemoveImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleAvailability = (day: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      availability: prev.availability.includes(day)
+        ? prev.availability.filter((d) => d !== day)
+        : [...prev.availability, day],
+    }));
+  };
+
+  const handleServiceTypeSelect = (typeId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      category: typeId, // Update the category with the selected service type ID
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -251,9 +249,9 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
       setIsLoading(false);
     }
   };
+
   return (
     <div className="space-y-6">
-      {/* Header and Back Button */}
       <div className="flex w-full justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -299,18 +297,24 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">Price *</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  placeholder="0"
-                  value={formData.price}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  required
-                />
+                <Label htmlFor="category">Category *</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    handleSelectChange("category", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {serviceCategories?.map((category) => (
+                      <SelectItem key={category.value} value={category.value}>
+                        {category.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -328,6 +332,20 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Price *</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  placeholder="0"
+                  value={formData.price}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="duration">Pricing Duration *</Label>
                 <Select
@@ -352,6 +370,70 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
           </CardContent>
         </Card>
 
+        {/* Service Images */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Images</CardTitle>
+            <CardDescription>
+              Upload images that represent your service (max {MAX_IMAGES})
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {/* Existing image previews */}
+              {formData.images?.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={imagePreviews[index] || image}
+                    alt={`Service image ${index + 1}`}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Upload area */}
+              {formData.images?.length < MAX_IMAGES && (
+                <FileUploader
+                  multiple={true}
+                  handleChange={handleImageChange}
+                  name="file"
+                  types={fileTypes}
+                  disabled={uploadingImages}
+                >
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors p-4">
+                    {uploadingImages ? (
+                      <div className="text-center">
+                        <p>Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <ImagePlus className="mx-auto h-10 w-10 text-gray-400" />
+                        <p className="mt-2 text-sm text-gray-600">
+                          Drag & drop images here
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          or click to browse files
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          JPG, PNG, WEBP (max{" "}
+                          {MAX_IMAGES - formData.images?.length} more)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </FileUploader>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Service Type Selection */}
         <Card>
           <Accordion
@@ -368,7 +450,7 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
                     Select the category and specific type for your service
                     {formData.category && (
                       <span className="ml-2 text-blue-500">
-                        (Selected: {getSelectedCategoryName()})
+                        Selected:{formData?.category}
                       </span>
                     )}
                   </CardDescription>
@@ -427,68 +509,6 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
           </Accordion>
         </Card>
 
-        {/* Service Images */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Service Images</CardTitle>
-            <CardDescription>
-              Upload images that represent your service (max {MAX_IMAGES})
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {formData.images?.map((image, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={imagePreviews[index] || image}
-                    alt={`Service image ${index + 1}`}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(index)}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-
-              {formData.images?.length < MAX_IMAGES && (
-                <FileUploader
-                  multiple={true}
-                  handleChange={handleImageChange}
-                  name="file"
-                  types={fileTypes}
-                  disabled={uploadingImages}
-                >
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors p-4">
-                    {uploadingImages ? (
-                      <div className="text-center">
-                        <p>Uploading...</p>
-                      </div>
-                    ) : (
-                      <div className="text-center">
-                        <ImagePlus className="mx-auto h-10 w-10 text-gray-400" />
-                        <p className="mt-2 text-sm text-gray-600">
-                          Drag & drop images here
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          or click to browse files
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2">
-                          JPG, PNG, WEBP (max{" "}
-                          {MAX_IMAGES - formData.images?.length} more)
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </FileUploader>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Settings */}
         <Card>
           <CardHeader>
@@ -526,7 +546,7 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
           <Button
             type="submit"
             className="bg-[#6BADA0] hover:bg-[#8E9196]"
-            disabled={isLoading || uploadingImages || !formData.category}
+            disabled={isLoading || uploadingImages}
           >
             {isLoading
               ? "Saving..."

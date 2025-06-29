@@ -24,6 +24,13 @@ import {
   AccordionTrigger,
 } from "../ui/accordion";
 import { serviceTypes } from "@/lib/data/service-types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 interface Service {
   id?: string;
@@ -291,19 +298,23 @@ export const ServiceFormComponent = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="duration">Pricing Duration *</Label>
-                <select
+                <Select
                   value={formData.duration}
-                  onChange={(e) =>
-                    handleSelectChange("duration", e.target.value)
+                  onValueChange={(value) =>
+                    handleSelectChange("duration", value)
                   }
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {durationOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durationOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
