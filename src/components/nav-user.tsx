@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  User,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,9 +28,11 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function NavUser({}: {}) {
   const { isMobile } = useSidebar();
+
   const router = useRouter();
   const { user, logout } = useAuth();
   const handleLogout = () => {
@@ -82,14 +85,18 @@ export function NavUser({}: {}) {
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
+              <Link href={user?._id ? "/dashboard/profile" : "#"}>
+                <DropdownMenuItem className="cursor-pointer">
+                  <User />
+                  Account
+                </DropdownMenuItem>
+              </Link>
+              <Link href={user?._id ? "/dashboard/subscriptions" : "#"}>
+                <DropdownMenuItem className="cursor-pointer">
+                  <CreditCard />
+                  Billing
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

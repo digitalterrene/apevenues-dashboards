@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,14 @@ import {
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { User, Building2, Globe, Phone, Mail, MapPin } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Toaster } from "sonner";
 
 const ProfileSettings = () => {
   const { user, updateProfile } = useAuth();
@@ -28,8 +36,26 @@ const ProfileSettings = () => {
     facebook: "",
     instagram: "",
     twitter: "",
+    businessType: "",
   });
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/current");
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data.user);
+          setFormData(data.user);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchUser();
+  }, []);
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -118,20 +144,42 @@ const ProfileSettings = () => {
                 rows={3}
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  id="website"
-                  name="website"
-                  type="url"
-                  placeholder="https://your-website.com"
-                  value={formData.website}
-                  onChange={handleChange}
-                  className="pl-10"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="businessType">Business Type</Label>
+                <Select
+                  value={formData.businessType}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, businessType: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Business Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="property-provider">
+                      Property Provider
+                    </SelectItem>
+                    <SelectItem value="service-provider">
+                      Service Provider
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="website"
+                    name="website"
+                    type="url"
+                    placeholder="https://your-website.com"
+                    value={formData.website}
+                    onChange={handleChange}
+                    className="pl-10 h-10"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>

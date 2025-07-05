@@ -44,7 +44,7 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.6.1",
     "react-select": "^5.10.1",
-    "sonner": "^2.0.5",
+    "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.0",
     "winston": "^3.17.0",
     "zustand": "^5.0.5"

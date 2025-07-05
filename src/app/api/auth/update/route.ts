@@ -17,6 +17,9 @@ interface User {
   createdAt?: Date;
   updatedAt?: Date;
   isActive?: boolean;
+  description: string;
+  website: string;
+  businessType: string;
 }
 
 interface UpdateData {
@@ -25,6 +28,7 @@ interface UpdateData {
   phone?: string;
   address?: string;
   email?: string;
+  _id?: never;
 }
 
 export async function PUT(request: Request) {
@@ -39,7 +43,17 @@ export async function PUT(request: Request) {
       userId: string;
     };
     const updateData: UpdateData = await request.json();
+    // Remove _id if it exists in the update data
+    const { _id, ...cleanUpdateData } = updateData;
 
+    if (Object.keys(cleanUpdateData).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
+
+    // Use cleanUpdateData instead of updateData
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { error: "No fields to update" },
@@ -55,7 +69,7 @@ export async function PUT(request: Request) {
       .collection<User>("users")
       .updateOne(
         { _id: new ObjectId(decoded.userId) },
-        { $set: { ...updateData, updatedAt: new Date() } }
+        { $set: { ...cleanUpdateData, updatedAt: new Date() } }
       );
 
     if (result.matchedCount === 0) {
