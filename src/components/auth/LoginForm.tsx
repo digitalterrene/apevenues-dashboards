@@ -83,7 +83,7 @@ const LoginForm = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>{" "}
+            </div>
             <div className="items-top flex space-x-2">
               <Checkbox
                 onCheckedChange={(checked: boolean) => {

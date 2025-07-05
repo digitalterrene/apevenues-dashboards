@@ -245,34 +245,6 @@ const ProfileSettings = () => {
           </CardContent>
         </Card>
 
-        {/* Account Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Summary</CardTitle>
-            <CardDescription>Your account at a glance</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-[#6BADA0]">
-                  {user?.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString()
-                    : "N/A"}
-                </div>
-                <div className="text-sm text-gray-600">Member Since</div>
-              </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">Active</div>
-                <div className="text-sm text-gray-600">Account Status</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">95%</div>
-                <div className="text-sm text-gray-600">Profile Complete</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Submit */}
         <div className="flex justify-end">
           <Button
