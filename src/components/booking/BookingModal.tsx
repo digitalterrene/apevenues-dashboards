@@ -23,6 +23,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface BookingModalProps {
   property: Property;
@@ -56,9 +57,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>(
     []
   );
+  const [needsOtherServices, setNeedsOtherServices] = useState<boolean | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
-  // console.log({ services: property.services });
+
   const handleServiceToggle = (service: SelectedService) => {
     setSelectedServices((prev) => {
       const existingIndex = prev.findIndex((s) => s.id === service.id);
@@ -118,6 +122,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         specialRequests: formData.specialRequests,
         selectedServices: selectedServices,
         totalServiceCost: calculateTotalServiceCost(),
+        needsOtherServices: needsOtherServices,
       };
 
       // Pre-fill user info if logged in
@@ -169,6 +174,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
     });
     setSelectedDate(undefined);
     setSelectedServices([]);
+    setNeedsOtherServices(null);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -191,202 +197,251 @@ const BookingModal: React.FC<BookingModalProps> = ({
   }, [user, isOpen]);
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-          resetForm();
-        }
-      }}
-    >
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Book {property.name}</DialogTitle>
-          <DialogDescription>
-            <div className="flex items-center space-x-2 text-sm text-gray-600 mt-2">
-              <MapPin className="h-4 w-4" />
-              <span>
-                {property.address}, {property.city}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <Users className="h-4 w-4" />
-              <span>Capacity: {property.capacity} guests</span>
-            </div>
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="customerName">Full Name *</Label>
-              <Input
-                id="customerName"
-                value={formData.customerName}
-                onChange={(e) =>
-                  handleInputChange("customerName", e.target.value)
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="customerPhone">Phone *</Label>
-              <Input
-                id="customerPhone"
-                type="tel"
-                value={formData.customerPhone}
-                onChange={(e) =>
-                  handleInputChange("customerPhone", e.target.value)
-                }
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="customerEmail">Email *</Label>
-            <Input
-              id="customerEmail"
-              type="email"
-              value={formData.customerEmail}
-              onChange={(e) =>
-                handleInputChange("customerEmail", e.target.value)
-              }
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Event Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : "Select date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    disabled={(date) => date < new Date()}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div>
-              <Label htmlFor="guestCount">Guest Count *</Label>
-              <Input
-                id="guestCount"
-                type="number"
-                min="1"
-                max={property.capacity}
-                value={formData.guestCount}
-                onChange={(e) =>
-                  handleInputChange("guestCount", e.target.value)
-                }
-                required
-              />
-            </div>
-          </div>
-
-          {/* Services Section */}
-          {property.services && property.services.length > 0 && (
-            <div className="space-y-3 ">
-              <Label>Available Services</Label>
-              <div className="space-y-2   mt-2">
-                {property.services.map((service) => (
-                  <div
-                    key={service.id}
-                    className="flex items-start shadow border-1 p-2 rounded-lg space-x-3"
-                  >
-                    <Checkbox
-                      id={`service-${service.id}`}
-                      checked={selectedServices.some(
-                        (s) => s.id === service.id
-                      )}
-                      onCheckedChange={() =>
-                        handleServiceToggle({
-                          id: service.id,
-                          name: service.name,
-                          price: service.price,
-                          duration: service.duration,
-                          description: service.description,
-                          image: service?.image,
-                          category: service?.category,
-                        })
-                      }
-                    />
-                    <div className="flex-1">
-                      <Label
-                        htmlFor={`service-${service.id}`}
-                        className="flex items-center justify-between"
-                      >
-                        <span>{service.name}</span>
-                        <span className="font-medium">
-                          R{service.price} / {service.duration}
-                        </span>
-                      </Label>
-                      <div className="flex items-center mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {service.category}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+    <div className="overflow-y-auto h-[70%]">
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            onClose();
+            resetForm();
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[100vh]  overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Book {property.name}</DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center space-x-2 text-sm text-gray-600 mt-2">
+                <MapPin className="h-4 w-4" />
+                <span>
+                  {property.address}, {property.city}
+                </span>
               </div>
-              {selectedServices.length > 0 && (
-                <div className="text-right font-medium">
-                  Total Services Cost: R{calculateTotalServiceCost()}
-                </div>
-              )}
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Users className="h-4 w-4" />
+                <span>Capacity: {property.capacity} guests</span>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="customerName">Full Name *</Label>
+                <Input
+                  id="customerName"
+                  value={formData.customerName}
+                  onChange={(e) =>
+                    handleInputChange("customerName", e.target.value)
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="customerPhone">Phone *</Label>
+                <Input
+                  id="customerPhone"
+                  type="tel"
+                  value={formData.customerPhone}
+                  onChange={(e) =>
+                    handleInputChange("customerPhone", e.target.value)
+                  }
+                  required
+                />
+              </div>
             </div>
-          )}
 
-          <div>
-            <Label htmlFor="specialRequests">Special Requests</Label>
-            <Textarea
-              id="specialRequests"
-              value={formData.specialRequests}
-              onChange={(e) =>
-                handleInputChange("specialRequests", e.target.value)
-              }
-              placeholder="Any special requirements or requests..."
-              rows={3}
-            />
-          </div>
+            <div>
+              <Label htmlFor="customerEmail">Email *</Label>
+              <Input
+                id="customerEmail"
+                type="email"
+                value={formData.customerEmail}
+                onChange={(e) =>
+                  handleInputChange("customerEmail", e.target.value)
+                }
+                required
+              />
+            </div>
 
-          <div className="flex space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                onClose();
-                resetForm();
-              }}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 bg-[#6BADA0] hover:bg-[#8E9196]"
-            >
-              {isSubmitting ? "Sending..." : "Send Request"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Event Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate
+                        ? format(selectedDate, "PPP")
+                        : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label htmlFor="guestCount">Guest Count *</Label>
+                <Input
+                  id="guestCount"
+                  type="number"
+                  min="1"
+                  max={property.capacity}
+                  value={formData.guestCount}
+                  onChange={(e) =>
+                    handleInputChange("guestCount", e.target.value)
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Services Section */}
+            {property.services && property.services.length > 0 && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    Need Event Services With Your Booking?
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Select everything you might need for your event - we'll
+                    connect you to available providers instantly
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">
+                    Do you need other event services?
+                  </h4>
+                  <div className="flex space-x-3">
+                    <Button
+                      type="button"
+                      variant={
+                        needsOtherServices === true ? "default" : "outline"
+                      }
+                      onClick={() => setNeedsOtherServices(true)}
+                      className="flex-1 cursor-pointer"
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={
+                        needsOtherServices === false ? "default" : "outline"
+                      }
+                      onClick={() => setNeedsOtherServices(false)}
+                      className="flex-1 cursor-pointer"
+                    >
+                      No
+                    </Button>
+                  </div>
+                </div>
+                {needsOtherServices && (
+                  <div className="space-y-3">
+                    {property.services.map((service) => (
+                      <div
+                        key={service.id}
+                        className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <Checkbox
+                          id={`service-${service.id}`}
+                          checked={selectedServices.some(
+                            (s) => s.id === service.id
+                          )}
+                          onCheckedChange={() =>
+                            handleServiceToggle({
+                              id: service.id,
+                              name: service.name,
+                              price: service.price,
+                              duration: service.duration,
+                              description: service.description,
+                              image: service?.image,
+                              category: service?.category,
+                            })
+                          }
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor={`service-${service.id}`}
+                              className="font-medium"
+                            >
+                              {service.name}
+                            </Label>
+                            <span className="text-sm font-medium">
+                              R{service.price} / {service.duration}
+                            </span>
+                          </div>
+                          {service.description && (
+                            <p className="text-sm line-clamp-2 text-gray-600 mt-1">
+                              {service.description}
+                            </p>
+                          )}
+                          <div className="mt-2">
+                            <Badge variant="outline" className="text-xs">
+                              {service.category}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedServices.length > 0 && (
+                  <div className="text-right font-medium">
+                    Total Services Cost: R{calculateTotalServiceCost()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="specialRequests">Special Requests</Label>
+              <Textarea
+                id="specialRequests"
+                value={formData.specialRequests}
+                onChange={(e) =>
+                  handleInputChange("specialRequests", e.target.value)
+                }
+                placeholder="Any special requirements or requests..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  onClose();
+                  resetForm();
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-[#6BADA0] hover:bg-[#8E9196]"
+              >
+                {isSubmitting ? "Sending..." : "Send Request"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
