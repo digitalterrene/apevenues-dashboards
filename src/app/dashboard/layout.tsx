@@ -17,7 +17,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
-
+import { Toaster } from "@/components/ui/sonner";
 export default function Dashboard_Layout({
   children,
 }: Readonly<{
@@ -62,6 +62,7 @@ export default function Dashboard_Layout({
   return (
     <>
       <ProtectedRoute>
+        <Toaster position="top-right" />
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>

@@ -23,7 +23,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "../ui/scroll-area";
 
 interface BookingModalProps {
   property: Property;

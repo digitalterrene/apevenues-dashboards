@@ -307,51 +307,6 @@ const ViewPropertyListing = () => {
                 )}
               </CardContent>
             </Card>
-            {/* Available ServicesL */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Services</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {(property?.services?.length as number) > 0 ? (
-                  <div className="gap-4 grid grid-cols-1">
-                    {property?.services?.map((service) => (
-                      <div key={service.id} className="border rounded-lg p-4">
-                        <div className="grid grid-cols-3 items-start gap-4">
-                          <img
-                            src={service.image}
-                            alt={service.name}
-                            className="h-full w-full col-span-1 object-cover rounded-md flex-shrink-0"
-                          />
-                          <div className="flex-1 col-span-2">
-                            <div className="flex justify-between items-start">
-                              <h5 className="font-medium w-46 truncate">
-                                {service.name}
-                              </h5>
-                              <span className="text-sm ml-auto font-medium">
-                                R{service.price} / {service.duration}
-                              </span>
-                            </div>
-                            <p className="text-sm line-clamp-4 text-gray-600 mt-1">
-                              {service.description}
-                            </p>
-                            <div className="flex items-center gap-2 mt-3">
-                              <Badge variant="outline">
-                                {service.category}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">
-                    No available services mentioned for this property?.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
           </div>
         </div>
 
