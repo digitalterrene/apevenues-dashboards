@@ -90,7 +90,6 @@ export async function GET(
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -128,6 +127,33 @@ export async function PUT(
         { error: "Service not found or unauthorized" },
         { status: 404 }
       );
+    }
+
+    // Check for duplicate service (same name and category) excluding current service
+    if (updates.name || updates.category) {
+      const duplicateQuery: any = {
+        user_id: decoded.userId,
+        _id: { $ne: new ObjectId(params.id) }, // Exclude current service
+      };
+
+      if (updates.name) duplicateQuery.name = updates.name;
+      if (updates.category) duplicateQuery.category = updates.category;
+      else duplicateQuery.category = existingService.category;
+
+      const duplicateService = await collection.findOne(duplicateQuery);
+
+      if (duplicateService) {
+        return NextResponse.json(
+          {
+            error: `Service '${
+              updates.name || existingService.name
+            }' already exists in category '${
+              updates.category || existingService.category
+            }'`,
+          },
+          { status: 409 } // 409 Conflict status code
+        );
+      }
     }
 
     const updateData = {
@@ -181,7 +207,6 @@ export async function PUT(
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
