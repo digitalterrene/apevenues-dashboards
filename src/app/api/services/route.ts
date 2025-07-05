@@ -52,6 +52,22 @@ export async function POST(request: Request) {
     const db = await getDb();
     const collection = db.collection("services");
 
+    // Check for existing service with same name and category
+    const existingService = await collection.findOne({
+      name: serviceData.name,
+      category: serviceData.category,
+      user_id: decoded.userId, // Optional: restrict to same user if needed
+    });
+
+    if (existingService) {
+      return NextResponse.json(
+        {
+          error: `Service '${serviceData.name}' already exists in category '${serviceData.category}'`,
+        },
+        { status: 409 } // 409 Conflict status code
+      );
+    }
+
     const newService: Service = {
       ...serviceData,
       user_id: decoded.userId,

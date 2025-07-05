@@ -8,6 +8,8 @@ import {
   CreditCard,
   Calendar,
   Luggage,
+  Sparkles,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
@@ -50,6 +52,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       path: "/dashboard/services",
       label: "Services",
       icon: Luggage,
+    },
+    {
+      path: "/dashboard/service-requests",
+      label: "Service Requests",
+      icon: Bell,
     },
     {
       path: "/dashboard/subscriptions",

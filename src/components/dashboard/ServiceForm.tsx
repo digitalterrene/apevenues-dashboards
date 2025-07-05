@@ -5,7 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploader } from "react-drag-drop-files";
-import { ImagePlus, Trash2, ArrowLeft, Check } from "lucide-react";
+import {
+  ImagePlus,
+  Trash2,
+  ArrowLeft,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -17,12 +23,6 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useServices } from "@/hooks/userServices";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../ui/accordion";
 import { serviceTypes } from "@/lib/data/service-types";
 import {
   Select,
@@ -31,6 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
 
 interface Service {
   id?: string;
@@ -48,7 +57,25 @@ export const ServiceFormComponent = () => {
   const isEditing = Boolean(id);
   const { services, addService, updateService } = useServices();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
+  // Flatten all service types for search
+  const allServiceTypes = serviceTypes.flatMap((group) =>
+    group.types.map((type) => ({
+      ...type,
+      category: group.category,
+    }))
+  );
+
+  // Filter based on search input
+  const filteredServices = searchValue
+    ? allServiceTypes.filter(
+        (service) =>
+          service.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          service.category.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    : allServiceTypes;
   // Constants
   const fileTypes = ["JPG", "PNG", "JPEG", "WEBP"];
   const MAX_IMAGES = 5;
@@ -120,7 +147,7 @@ export const ServiceFormComponent = () => {
         toast.success("Service updated successfully");
       } else {
         await addService(formData);
-        toast.success("Service added successfully");
+        // toast.success("Service added successfully");
       }
 
       setTimeout(() => {
@@ -297,6 +324,125 @@ export const ServiceFormComponent = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="duration">Type of Event Service Provider</Label>
+                <div>
+                  {" "}
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-full h-10 justify-between"
+                      >
+                        {formData.category
+                          ? allServiceTypes.find(
+                              (type) => type.id === formData.category
+                            )?.name
+                          : "Select service type..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="end"
+                      className="w-full lg:w-[400px] p-0"
+                    >
+                      <Command>
+                        <CommandInput
+                          placeholder="Search service types..."
+                          value={searchValue}
+                          onValueChange={setSearchValue}
+                        />
+                        <CommandList>
+                          <CommandEmpty>No service type found.</CommandEmpty>
+                          {serviceTypes.map((group) => (
+                            <CommandGroup
+                              key={group.category}
+                              heading={group.category}
+                            >
+                              {group.types
+                                .filter((type) =>
+                                  filteredServices.some((t) => t.id === type.id)
+                                )
+                                .map((type) => (
+                                  <CommandItem
+                                    key={type.id}
+                                    value={type.id}
+                                    onSelect={() => {
+                                      handleServiceTypeSelect(type.id);
+                                      setOpen(false);
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <div className="flex items-center gap-3 w-full">
+                                      <img
+                                        src={`/service-types/${group.category}/${type.id}.jpg`}
+                                        className="w-10 h-10 object-cover rounded-md"
+                                        alt={type.name}
+                                      />
+                                      <div className="flex-1">
+                                        <div className="font-medium">
+                                          {type.name}
+                                        </div>
+                                        <div className="text-xs text-gray-500 line-clamp-1">
+                                          {type.description}
+                                        </div>
+                                      </div>
+                                      <Check
+                                        className={`h-4 w-4 ${
+                                          formData.category === type.id
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        }`}
+                                      />
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {/* Selected service preview (optional) */}
+                  {formData.category && (
+                    <div className="mt-4 border rounded-lg p-4">
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={`/service-types/${
+                            allServiceTypes.find(
+                              (t) => t.id === formData.category
+                            )?.category
+                          }/${formData.category}.jpg`}
+                          className="w-20 h-20 object-cover rounded-lg"
+                          alt={
+                            allServiceTypes.find(
+                              (t) => t.id === formData.category
+                            )?.name
+                          }
+                        />
+                        <div>
+                          <h4 className="font-medium">
+                            {
+                              allServiceTypes.find(
+                                (t) => t.id === formData.category
+                              )?.name
+                            }
+                          </h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {
+                              allServiceTypes.find(
+                                (t) => t.id === formData.category
+                              )?.description
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="duration">Pricing Duration *</Label>
                 <Select
                   value={formData.duration}
@@ -318,81 +464,6 @@ export const ServiceFormComponent = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
-
-        {/* Service Type Selection */}
-        <Card>
-          <Accordion
-            type="single"
-            collapsible
-            className="w-full py-0 pr-6"
-            defaultValue="item-1"
-          >
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-xl border-none hover:border-none">
-                <CardHeader className="text-start py-0">
-                  <CardTitle>Type of Event Service Provider</CardTitle>
-                  <CardDescription>
-                    Select the category and specific type for your service
-                    {formData.category && (
-                      <span className="ml-2 text-blue-500">
-                        Selected:{formData?.category}
-                      </span>
-                    )}
-                  </CardDescription>
-                </CardHeader>
-              </AccordionTrigger>
-              <AccordionContent className="flex flex-col gap-4 text-balance">
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6">
-                    {serviceTypes.map((group) => (
-                      <div key={group.category} className="space-y-3">
-                        <h3 className="font-semibold text-lg">
-                          {group.category}
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {group.types.map((type) => (
-                            <div
-                              key={type.id}
-                              onClick={() => handleServiceTypeSelect(type.id)}
-                              className={`
-                                border rounded-lg p-4 cursor-pointer transition-all
-                                hover:border-blue-500 hover:bg-blue-50
-                                ${
-                                  formData.category === type.id
-                                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                                    : "border-gray-200"
-                                }
-                              `}
-                            >
-                              <div className="flex items-start gap-3">
-                                <img
-                                  src={`/service-types/${group.category}/${type.id}.jpg`}
-                                  className="w-20 object-cover object-center rounded-lg h-20"
-                                  alt={type.name}
-                                />
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{type.name}</h4>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {type.description}
-                                  </p>
-                                </div>
-                                {formData.category === type.id && (
-                                  <div className="text-blue-500">
-                                    <Check className="h-5 w-5" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </Card>
 
         {/* Service Images */}

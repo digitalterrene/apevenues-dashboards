@@ -200,4 +200,14 @@ export const serviceTypes = [
       // },
     ],
   },
+  {
+    category: "Other",
+    types: [
+      {
+        id: "other",
+        name: "Uncategorized",
+        description: "Other or uncategorized",
+      },
+    ],
+  },
 ];
