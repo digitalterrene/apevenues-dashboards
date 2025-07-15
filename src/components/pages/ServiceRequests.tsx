@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, ReactNode } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -28,171 +28,184 @@ import {
   Search,
   X,
   Check,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Service } from "@/types/service";
 
-interface BookingRequest {
-  totalServiceCost: ReactNode;
-  selectedServices: any;
+interface ServiceRequest {
   id: string;
-  propertyId: string;
-  propertyName: string;
-  businessId: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  eventDate: string;
-  guestCount: number;
-  specialRequests: string;
-  status: "pending" | "confirmed" | "rejected";
+  customerWhatsApp?: string;
+  addressRequestingService: string;
+  selectedServices: Array<{
+    id: string;
+    name: string;
+    price: number;
+    duration: string;
+    category: string;
+    description?: string;
+    image?: string;
+  }>;
+  totalCost: number;
+  status: "pending" | "accepted" | "rejected" | "completed";
+  eventDate?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 const ServiceRequests = () => {
-  const [bookings, setBookings] = useState<BookingRequest[]>([]);
-  const [filteredBookings, setFilteredBookings] = useState<BookingRequest[]>(
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<ServiceRequest[]>(
     []
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  // Update the updateBookingStatus function to use Sonner correctly
-  const updateBookingStatus = async (
-    bookingId: string,
-    newStatus: "confirmed" | "rejected"
+
+  const fetchServiceRequests = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `/api/services/requests?businessId=${user?.id}`
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setRequests(data.serviceRequests);
+      } else {
+        throw new Error(data.error || "Failed to fetch service requests");
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description:
+          error instanceof Error ? error.message : "Failed to fetch requests",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateRequestStatus = async (
+    requestId: string,
+    newStatus: "accepted" | "rejected" | "completed"
   ) => {
-    // Show loading toast
-    const toastId = toast.loading("Updating booking status...");
+    const toastId = toast.loading("Updating request status...");
 
     try {
-      const response = await fetch(`/api/bookings/${bookingId}`, {
+      const response = await fetch(`/api/services/requests`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ id: requestId, status: newStatus }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setBookings((prev) =>
-          prev.map((booking) =>
-            booking?.id === bookingId
-              ? { ...booking, status: newStatus }
-              : booking
+        setRequests((prev) =>
+          prev.map((request) =>
+            request.id === requestId
+              ? { ...request, status: newStatus }
+              : request
           )
         );
-        // Success toast
-        toast.success(`Booking has been ${newStatus}`, {
+        toast.success(`Service request has been ${newStatus}`, {
           id: toastId,
-          style: {
-            backgroundColor: "#6BADA0",
-            color: "white",
-            border: "none",
-          },
-          icon: <Check className="h-4 w-4" />,
         });
       } else {
-        throw new Error(data.error || "Failed to update booking");
+        throw new Error(data.error || "Failed to update request");
       }
     } catch (error) {
-      // Error toast
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to update booking status",
-        {
+      toast.error("Error", {
+        description:
+          error instanceof Error ? error.message : "Failed to update request",
+        id: toastId,
+      });
+    }
+  };
+
+  const deleteRequest = async (requestId: string) => {
+    const toastId = toast.loading("Deleting service request...");
+
+    try {
+      const response = await fetch(`/api/services/requests`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: requestId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setRequests((prev) =>
+          prev.filter((request) => request.id !== requestId)
+        );
+        toast.success("Service request deleted successfully", {
           id: toastId,
-          style: {
-            backgroundColor: "#D22B2B",
-            color: "white",
-            border: "none",
-          },
-          icon: <X className="h-4 w-4" />,
-        }
-      );
+        });
+      } else {
+        throw new Error(data.error || "Failed to delete request");
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description:
+          error instanceof Error ? error.message : "Failed to delete request",
+        id: toastId,
+      });
     }
   };
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/bookings/business");
-        const data = await response.json();
-
-        if (response.ok) {
-          setBookings(data.bookings);
-        } else {
-          toast.error(data.error || "Failed to fetch bookings", {
-            style: {
-              backgroundColor: "#D22B2B",
-              color: "white",
-              border: "none",
-            },
-            icon: <X className="h-4 w-4" />,
-          });
-        }
-      } catch (error) {
-        toast.error("Network error occurred", {
-          style: {
-            backgroundColor: "#D22B2B",
-            color: "white",
-            border: "none",
-          },
-          icon: <X className="h-4 w-4" />,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (user) {
-      fetchBookings();
+      fetchServiceRequests();
     }
   }, [user]);
 
   useEffect(() => {
-    filterBookings();
-  }, [bookings, searchTerm, statusFilter]);
-  console.log({ bookings });
-  const filterBookings = () => {
-    let filtered = bookings;
+    filterRequests();
+  }, [requests, searchTerm, statusFilter]);
+
+  const filterRequests = () => {
+    let filtered = requests;
 
     if (searchTerm) {
       filtered = filtered.filter(
-        (booking) =>
-          booking?.customerName
+        (request) =>
+          request.customerName
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          booking?.propertyName
+          request.customerEmail
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          booking?.customerEmail
+          request.addressRequestingService
             .toLowerCase()
             .includes(searchTerm.toLowerCase())
       );
     }
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter((booking) => booking?.status === statusFilter);
+      filtered = filtered.filter((request) => request.status === statusFilter);
     }
 
-    setFilteredBookings(filtered);
+    setFilteredRequests(filtered);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed":
+      case "accepted":
         return "bg-green-100 text-green-800";
       case "rejected":
         return "bg-red-100 text-red-800";
+      case "completed":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-yellow-100 text-yellow-800";
     }
@@ -200,10 +213,11 @@ const ServiceRequests = () => {
 
   const getStatusCounts = () => {
     return {
-      total: bookings.length,
-      pending: bookings.filter((b) => b.status === "pending").length,
-      confirmed: bookings.filter((b) => b.status === "confirmed").length,
-      rejected: bookings.filter((b) => b.status === "rejected").length,
+      total: requests.length,
+      pending: requests.filter((r) => r.status === "pending").length,
+      accepted: requests.filter((r) => r.status === "accepted").length,
+      rejected: requests.filter((r) => r.status === "rejected").length,
+      completed: requests.filter((r) => r.status === "completed").length,
     };
   };
 
@@ -211,13 +225,8 @@ const ServiceRequests = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 bg-gray-200 rounded animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded animate-pulse" />
-          ))}
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -225,14 +234,14 @@ const ServiceRequests = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Booking Requests</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Service Requests</h1>
         <p className="text-gray-600">
-          Manage booking requests for your properties
+          Manage service requests from your customers
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -241,7 +250,7 @@ const ServiceRequests = () => {
             <Calendar className="h-4 w-4 text-[#6BADA0]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{statusCounts?.total}</div>
+            <div className="text-2xl font-bold">{statusCounts.total}</div>
           </CardContent>
         </Card>
         <Card>
@@ -251,29 +260,40 @@ const ServiceRequests = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {statusCounts?.pending}
+              {statusCounts.pending}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
-            <Users className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Accepted</CardTitle>
+            <Check className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {statusCounts?.confirmed}
+              {statusCounts.accepted}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-            <MapPin className="h-4 w-4 text-red-600" />
+            <X className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {statusCounts?.rejected}
+              {statusCounts.rejected}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {statusCounts.completed}
             </div>
           </CardContent>
         </Card>
@@ -284,7 +304,7 @@ const ServiceRequests = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Filter className="h-5 w-5" />
-            <span>Filter Service Requests</span>
+            <span>Filter Requests</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -292,7 +312,7 @@ const ServiceRequests = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search bookings..."
+                placeholder="Search requests..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -305,47 +325,49 @@ const ServiceRequests = () => {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="accepted">Accepted</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
             <div className="text-sm text-gray-600 flex items-center">
-              {filteredBookings.length} bookings found
+              {filteredRequests.length} requests found
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* ServiceRequests List */}
+      {/* Requests List */}
       <div className="space-y-4">
-        {filteredBookings?.length === 0 ? (
+        {filteredRequests.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No booking requests
+                No service requests
               </h3>
               <p className="text-gray-600">
-                You haven't received any booking requests yet.
+                You haven't received any service requests yet.
               </p>
             </CardContent>
           </Card>
         ) : (
-          filteredBookings?.map((booking) => (
-            <Card key={booking?.id}>
+          filteredRequests.map((request) => (
+            <Card key={request.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg">
-                      {booking?.propertyName}
+                      Service Request from {request.customerName}
                     </CardTitle>
                     <CardDescription>
-                      Booking request from {booking?.customerName}
+                      {request.eventDate &&
+                        `For ${format(new Date(request.eventDate), "PPP")}`}
                     </CardDescription>
                   </div>
-                  <Badge className={getStatusColor(booking?.status)}>
-                    {booking?.status.charAt(0).toUpperCase() +
-                      booking?.status.slice(1)}
+                  <Badge className={getStatusColor(request.status)}>
+                    {request.status.charAt(0).toUpperCase() +
+                      request.status.slice(1)}
                   </Badge>
                 </div>
               </CardHeader>
@@ -353,109 +375,119 @@ const ServiceRequests = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2 text-sm">
-                      <Users className="h-4 w-4 text-gray-600" />
-                      <span className="font-medium">Guest Count:</span>
-                      <span>{booking?.guestCount} guests</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Calendar className="h-4 w-4 text-gray-600" />
-                      <span className="font-medium">Event Date:</span>
-                      <span>{format(new Date(booking?.eventDate), "PPP")}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Clock className="h-4 w-4 text-gray-600" />
-                      <span className="font-medium">Requested:</span>
-                      <span>{format(new Date(booking?.createdAt), "PPp")}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 text-sm">
                       <Mail className="h-4 w-4 text-gray-600" />
                       <span className="font-medium">Email:</span>
-                      <span>{booking?.customerEmail}</span>
+                      <span>{request.customerEmail}</span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
                       <Phone className="h-4 w-4 text-gray-600" />
                       <span className="font-medium">Phone:</span>
-                      <span>{booking?.customerPhone}</span>
+                      <span>{request.customerPhone}</span>
+                    </div>
+                    {request.customerWhatsApp && (
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Phone className="h-4 w-4 text-gray-600" />
+                        <span className="font-medium">WhatsApp:</span>
+                        <span>{request.customerWhatsApp}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <MapPin className="h-4 w-4 text-gray-600" />
+                      <span className="font-medium">Service Address:</span>
+                      <span>{request.addressRequestingService}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm">
+                      <Clock className="h-4 w-4 text-gray-600" />
+                      <span className="font-medium">Requested:</span>
+                      <span>{format(new Date(request.createdAt), "PPp")}</span>
                     </div>
                   </div>
                 </div>
+
                 {/* Selected services */}
-                {booking?.selectedServices?.length > 0 && (
-                  <div className="mt-10">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium text-sm text-gray-900 mb-1">
-                        Services Requested
-                      </h4>
-                      <Badge className="text-sm bg-[#6BADA0]  font-medium">
-                        R{booking?.totalServiceCost}
-                      </Badge>{" "}
-                    </div>
-                    <div className="grid gap-4 grid-cols-3">
-                      {booking?.selectedServices?.map((service: Service) => (
-                        <div key={service.id} className="border rounded-lg p-4">
-                          <div className="grid grid-cols-3 h-full items-start gap-4">
+                <div className="mt-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-sm text-gray-900">
+                      Requested Services
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4">
+                    {request.selectedServices.map((service) => (
+                      <div key={service.id} className="border rounded-lg p-4">
+                        <div className="flex items-start gap-4">
+                          {service.image && (
                             <img
                               src={service.image}
                               alt={service.name}
-                              className="h-full w-full object-cover rounded-md flex-shrink-0"
+                              className="h-16 w-16 object-cover rounded-md"
                             />
-                            <div className="flex-1 col-span-2">
-                              <div className="flex justify-between items-start">
-                                <h5 className="font-medium">{service.name}</h5>
-                              </div>
-                              <p className="text-sm line-clamp-4 text-gray-600 mt-1">
+                          )}
+                          <div className="flex-1">
+                            <div className="flex justify-between">
+                              <h5 className="font-medium">{service.name}</h5>
+                            </div>
+                            {service.description && (
+                              <p className="text-sm text-gray-600 mt-1">
                                 {service.description}
                               </p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline">
-                                  {service.category}
-                                </Badge>
-                                <span className="text-sm font-medium">
-                                  R{service.price} / {service.duration}
-                                </span>
-                              </div>
+                            )}
+                            <div className="mt-2">
+                              <Badge variant="outline">
+                                {service.category}
+                              </Badge>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
 
-                {booking?.specialRequests && (
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium text-sm text-gray-900 mb-1">
-                      Special Requests:
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {booking?.specialRequests}
-                    </p>
+                {/* Action buttons */}
+                <div className="flex justify-between mt-6">
+                  <Button
+                    variant="destructive"
+                    onClick={() => deleteRequest(request.id)}
+                    size="sm"
+                  >
+                    Delete Request
+                  </Button>
+                  <div className="flex space-x-2">
+                    {request.status === "pending" && (
+                      <>
+                        <Button
+                          variant="destructive"
+                          onClick={() =>
+                            updateRequestStatus(request.id, "rejected")
+                          }
+                          size="sm"
+                        >
+                          Reject
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            updateRequestStatus(request.id, "accepted")
+                          }
+                          size="sm"
+                        >
+                          Accept
+                        </Button>
+                      </>
+                    )}
+                    {request.status === "accepted" && (
+                      <Button
+                        onClick={() =>
+                          updateRequestStatus(request.id, "completed")
+                        }
+                        size="sm"
+                      >
+                        Mark as Completed
+                      </Button>
+                    )}
                   </div>
-                )}
-
-                {booking?.status === "pending" && (
-                  <div className="flex space-x-3 mt-6">
-                    <Button
-                      onClick={() =>
-                        updateBookingStatus(booking?.id, "rejected")
-                      }
-                      variant="outline"
-                      className="flex-1 cursor-pointer border-red-200 text-red-600 hover:bg-red-50"
-                    >
-                      Reject
-                    </Button>
-                    <Button
-                      onClick={() =>
-                        updateBookingStatus(booking?.id, "confirmed")
-                      }
-                      className="flex-1 cursor-pointer bg-green-600 hover:bg-green-700"
-                    >
-                      Confirm Booking
-                    </Button>
-                  </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           ))
