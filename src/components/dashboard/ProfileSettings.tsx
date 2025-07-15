@@ -11,8 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
-import { User, Building2, Globe, Phone, Mail, MapPin } from "lucide-react";
+import { toast } from "sonner";
+import { User, Building2, Globe, Phone, Mail, MapPin, Dot } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,41 +21,29 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Toaster } from "sonner";
+import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import { useRouter } from "next/navigation";
 
 const ProfileSettings = () => {
   const { user, updateProfile } = useAuth();
+  console.log({ user });
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const [formData, setFormData] = useState({
     businessName: user?.businessName || "",
     contactPerson: user?.contactPerson || "",
     email: user?.email || "",
     phone: user?.phone || "",
     address: user?.address || "",
-    website: "",
-    description: "",
-    facebook: "",
-    instagram: "",
-    twitter: "",
-    businessType: "",
+    website: user?.website || "",
+    description: user?.description || "",
+    facebook: user?.facebook || "",
+    instagram: user?.instagram || "",
+    twitter: user?.twitter || "",
+    businessType: user?.businessType || "",
+    userCapacity: user?.userCapacity || "",
   });
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch("/api/auth/current");
-        if (response.ok) {
-          const data = await response.json();
-          console.log(data.user);
-          setFormData(data.user);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    fetchUser();
-  }, []);
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -69,27 +57,34 @@ const ProfileSettings = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    const toastId = toast.loading("Updating user information...");
 
     try {
-      updateProfile(formData);
+      await updateProfile(formData);
 
-      toast({
-        title: "Profile updated",
+      // Show success toast
+      toast.success("Profile updated", {
+        id: toastId,
         description: "Your business profile has been successfully updated.",
       });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
 
-    setIsLoading(false);
+      // Soft reload after a short delay to show the toast
+      setTimeout(() => {
+        router.refresh();
+      }, 1000);
+    } catch (error) {
+      toast.error("Failed to update profile", {
+        id: toastId,
+        description: "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="">
+      <Toaster position="top-right" richColors />
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
         <p className="text-gray-600">
@@ -98,6 +93,7 @@ const ProfileSettings = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Rest of your form remains the same */}
         {/* Business Information */}
         <Card>
           <CardHeader>
@@ -166,6 +162,110 @@ const ProfileSettings = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-base font-medium">
+                  <Label htmlFor="userCapacity">Platform Role</Label>
+
+                  <Dialog>
+                    <DialogTrigger asChild className="m-0">
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-primary transition"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-circle-question-mark cursor-pointer"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <path d="M12 17h.01" />
+                        </svg>
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] p-6 space-y-4">
+                      <div>
+                        <h2 className="text-lg font-semibold mb-2">
+                          What is a Platform Role?
+                        </h2>
+                        <p className="text-muted-foreground">
+                          Your <strong>Platform Role</strong> helps us
+                          understand how you plan to use the platform. It also
+                          determines the features and pricing you'll have access
+                          to.
+                        </p>
+                      </div>
+
+                      <div className="bg-muted rounded-md p-4">
+                        <div className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                          {[
+                            {
+                              name: "Individual Property Owner",
+                              desc: "A private homeowner listing their own property.",
+                            },
+                            {
+                              name: "Independent Agent",
+                              desc: "A solo agent managing listings for others.",
+                            },
+                            {
+                              name: "Real Estate Agency",
+                              desc: "A registered business representing multiple agents or properties.",
+                            },
+                            {
+                              name: "Property Management Company",
+                              desc: "A company handling multiple short- or long-term rentals.",
+                            },
+                          ]?.map((userCapacity) => (
+                            <span className="flex items-start">
+                              <Dot />
+                              <span className="mt-0.5">
+                                <strong className="text-foreground flex">
+                                  {userCapacity?.name}:
+                                </strong>
+                                {userCapacity?.desc}
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-muted-foreground">
+                        Choose the role that best describes your account to
+                        ensure you're billed fairly and receive the right tools.
+                      </p>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                <Select
+                  value={formData.userCapacity}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, userCapacity: value }))
+                  }
+                >
+                  <SelectTrigger className="m-0 mt-0">
+                    <SelectValue placeholder="Select your role on the platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="individual-owner">
+                      Individual Property Owner
+                    </SelectItem>
+                    <SelectItem value="agency">Real Estate Agency</SelectItem>
+                    <SelectItem value="agent">Independent Agent</SelectItem>
+                    <SelectItem value="company">
+                      Property Management Company
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="website">Website</Label>
                 <div className="relative">

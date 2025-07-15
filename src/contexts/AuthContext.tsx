@@ -11,6 +11,13 @@ interface User {
   role?: string;
   createdAt?: string;
   _id: string;
+  website?: string;
+  description?: string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  businessType?: "service-provider" | "property-provider";
+  userCapacity?: string;
 }
 
 interface AuthContextType {

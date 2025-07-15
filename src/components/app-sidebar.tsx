@@ -25,9 +25,16 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "./ui/button";
 import Link from "next/link";
 import { NavUser } from "@/components/nav-user";
+
+interface NavigationItem {
+  path: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+  subPaths?: string[];
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, logout } = useAuth();
@@ -40,8 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     router.push("/login");
   };
 
-  const navigationItems = [
-    { path: "/dashboard", label: "Dashboard", icon: Home, exact: true },
+  const propertyProviderSpecificNavigationItems: NavigationItem[] = [
     {
       path: "/dashboard/properties",
       label: "Properties",
@@ -49,21 +55,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       subPaths: ["/dashboard/properties/create", "/dashboard/properties/edit"],
     },
     { path: "/dashboard/bookings", label: "Bookings", icon: Calendar },
+  ];
+
+  const serviceProviderSpecificNavigationItems: NavigationItem[] = [
     {
       path: "/dashboard/services",
       label: "Services Offered",
       icon: Luggage,
     },
     {
-      path: "/dashboard/listed-services",
-      label: "Listed Services",
-      icon: LayoutList,
-    },
-    {
       path: "/dashboard/service-requests",
       label: "Service Requests",
       icon: Bell,
     },
+  ];
+
+  const commonNavigationItems: NavigationItem[] = [
+    { path: "/dashboard", label: "Dashboard", icon: Home, exact: true },
+  ];
+
+  const additionalNavigationItems =
+    user?.businessType === "service-provider"
+      ? serviceProviderSpecificNavigationItems
+      : propertyProviderSpecificNavigationItems;
+
+  const navigationItems: NavigationItem[] = [
+    ...commonNavigationItems,
+    ...additionalNavigationItems,
     {
       path: "/dashboard/subscriptions",
       label: "Subscriptions",
@@ -72,14 +90,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { path: "/dashboard/profile", label: "Profile", icon: User },
   ];
 
-  const isActive = (item: (typeof navigationItems)[0]) => {
+  const isActive = (item: NavigationItem) => {
     if (item.exact) {
       return pathname === item.path;
     }
     return (
       pathname.startsWith(item.path) ||
       (item.subPaths &&
-        item.subPaths.some((subPath) => pathname.startsWith(subPath)))
+        item.subPaths.some((subPath: string) => pathname.startsWith(subPath)))
     );
   };
 

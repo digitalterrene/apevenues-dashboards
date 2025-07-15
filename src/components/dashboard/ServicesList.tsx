@@ -1,30 +1,28 @@
 import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { useServices } from "@/hooks/userServices";
+import { toast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, Filter } from "lucide-react";
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  Clock,
-  Calendar,
-  Tag,
-  Filter,
-} from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { useServices } from "@/hooks/userServices";
-import { Service } from "@/types/service";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { serviceTypes } from "@/lib/data/service-types";
 
 const ServicesList = () => {
   const { services, isLoading, deleteService, updateService } = useServices();
@@ -32,44 +30,60 @@ const ServicesList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
 
+  // Flatten all service types for filtering
+  const allServiceTypes = serviceTypes.flatMap((group) =>
+    group.types.map((type) => ({
+      id: type.id,
+      name: type.name,
+      category: group.category,
+    }))
+  );
+
   const filteredServices = services.filter((service) => {
     const matchesSearch =
       service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.description.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilter =
-      filterCategory === "all" || service.category === filterCategory;
+      filterCategory === "all" ||
+      service.category === filterCategory ||
+      allServiceTypes.find((t) => t.id === service.category)?.category ===
+        filterCategory;
 
     return matchesSearch && matchesFilter;
   });
 
-  const handleDelete = (service: Service) => {
-    if (window.confirm(`Are you sure you want to delete "${service.name}"?`)) {
-      deleteService(service.id);
+  const handleDelete = (serviceId: string, serviceName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${serviceName}"?`)) {
+      deleteService(serviceId);
       toast({
         title: "Service deleted",
-        description: `${service.name} has been removed from your offerings.`,
+        description: `${serviceName} has been removed from your offerings.`,
       });
     }
   };
 
-  const toggleActive = (service: Service) => {
-    updateService(service.id, { isActive: !service.isActive });
+  const toggleActive = (
+    serviceId: string,
+    isActive: boolean,
+    serviceName: string
+  ) => {
+    updateService(serviceId, { isActive: !isActive });
     toast({
-      title: service.isActive ? "Service deactivated" : "Service activated",
-      description: `${service.name} is now ${
-        service.isActive ? "hidden from" : "visible to"
+      title: isActive ? "Service deactivated" : "Service activated",
+      description: `${serviceName} is now ${
+        isActive ? "hidden from" : "visible to"
       } customers.`,
     });
   };
 
+  // Get unique categories from serviceTypes
   const serviceCategories = [
-    "all",
-    "food",
-    "beverage",
-    "entertainment",
-    "wellness",
-    "other",
+    { id: "all", name: "All Categories" },
+    ...serviceTypes.map((group) => ({
+      id: group.category,
+      name: group.category,
+    })),
   ];
 
   if (isLoading) {
@@ -85,6 +99,15 @@ const ServicesList = () => {
     );
   }
 
+  const getServiceTypeInfo = (serviceId: string) => {
+    return (
+      allServiceTypes.find((type) => type.id === serviceId) || {
+        name: "Unknown",
+        category: "Other",
+      }
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -94,7 +117,7 @@ const ServicesList = () => {
         </div>
         <Button
           onClick={() => router.push("/dashboard/services/new")}
-          className="bg-[#6BADA0]  cursor-pointer hover:bg-[#8E9196]"
+          className="bg-[#6BADA0] hover:bg-[#8E9196]"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Service
@@ -118,29 +141,30 @@ const ServicesList = () => {
             </div>
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-400" />
-              <select
+              <Select
                 value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
+                onValueChange={(value) => setFilterCategory(value)}
               >
-                {serviceCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {category === "all"
-                      ? "All Categories"
-                      : category.charAt(0).toUpperCase() + category.slice(1)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {serviceCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Services Grid */}
+      {/* Services Table */}
       {filteredServices.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {searchTerm || filterCategory !== "all"
                 ? "No services found"
@@ -154,7 +178,7 @@ const ServicesList = () => {
             {!searchTerm && filterCategory === "all" && (
               <Button
                 onClick={() => router.push("/dashboard/services/new")}
-                className="bg-[#6BADA0]  cursor-pointer hover:bg-[#8E9196]"
+                className="bg-[#6BADA0] hover:bg-[#8E9196]"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Service
@@ -163,88 +187,90 @@ const ServicesList = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
-          {filteredServices.map((service) => (
-            <Card
-              key={service.id}
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CardTitle className="text-xl">{service.name}</CardTitle>
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredServices.map((service) => {
+                const serviceType = getServiceTypeInfo(service.category);
+                return (
+                  <TableRow key={service.id}>
+                    <TableCell className="font-medium">
+                      {service.name}
+                    </TableCell>
+                    <TableCell className="text-gray-600 line-clamp-2">
+                      {service.description}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{serviceType.name}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{serviceType.category}</Badge>
+                    </TableCell>
+                    <TableCell>
                       <Badge
                         variant={service.isActive ? "default" : "secondary"}
                       >
                         {service.isActive ? "Active" : "Inactive"}
                       </Badge>
-                      <Badge variant="outline">{service.category}</Badge>
-                    </div>
-                    <div className="flex items-center text-gray-600 mb-2">
-                      <Tag className="h-4 w-4 mr-1" />
-                      <span className="text-sm">
-                        {service.duration} minutes • ${service.price}
-                      </span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span className="text-sm">
-                        Available: {service?.availability?.join(", ")}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer"
-                      size="sm"
-                      onClick={() => toggleActive(service)}
-                    >
-                      {service.isActive ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer"
-                      size="sm"
-                      onClick={() =>
-                        router.push(`/dashboard/services/${service.id}/edit`)
-                      }
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(service)}
-                      className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {service.description}
-                </p>
-
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>
-                    Min. Age: {service.minAge ? `${service.minAge}+` : "None"}
-                  </span>
-                  <span>
-                    Updated: {new Date(service.updatedAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            toggleActive(
+                              service.id,
+                              service.isActive,
+                              service.name
+                            )
+                          }
+                          className="h-8 w-8 p-0"
+                        >
+                          {service.isActive ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/services/${service.id}/edit`
+                            )
+                          }
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(service.id, service.name)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   );
