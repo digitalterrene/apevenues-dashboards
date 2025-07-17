@@ -29,6 +29,7 @@ import {
   X,
   Check,
   Loader2,
+  CheckCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,7 +52,8 @@ interface ServiceRequest {
     image?: string;
   }>;
   totalCost: number;
-  status: "pending" | "accepted" | "rejected" | "completed";
+  status: "open" | "in_progress" | "completed";
+  acceptedBy: string[];
   eventDate?: string;
   createdAt: string;
   updatedAt: string;
@@ -70,9 +72,7 @@ const ServiceRequests = () => {
   const fetchServiceRequests = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(
-        `/api/services/requests?businessId=${user?.id}`
-      );
+      const response = await fetch(`/api/services/requests`);
       const data = await response.json();
 
       if (response.ok) {
@@ -90,11 +90,8 @@ const ServiceRequests = () => {
     }
   };
 
-  const updateRequestStatus = async (
-    requestId: string,
-    newStatus: "accepted" | "rejected" | "completed"
-  ) => {
-    const toastId = toast.loading("Updating request status...");
+  const acceptRequest = async (requestId: string) => {
+    const toastId = toast.loading("Accepting service request...");
 
     try {
       const response = await fetch(`/api/services/requests`, {
@@ -102,62 +99,21 @@ const ServiceRequests = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: requestId, status: newStatus }),
+        body: JSON.stringify({ id: requestId, businessId: user?.id }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setRequests((prev) =>
-          prev.map((request) =>
-            request.id === requestId
-              ? { ...request, status: newStatus }
-              : request
-          )
-        );
-        toast.success(`Service request has been ${newStatus}`, {
-          id: toastId,
-        });
+        toast.success("Service request accepted!", { id: toastId });
+        fetchServiceRequests(); // Refresh the list
       } else {
-        throw new Error(data.error || "Failed to update request");
+        throw new Error(data.error || "Failed to accept request");
       }
     } catch (error) {
       toast.error("Error", {
         description:
-          error instanceof Error ? error.message : "Failed to update request",
-        id: toastId,
-      });
-    }
-  };
-
-  const deleteRequest = async (requestId: string) => {
-    const toastId = toast.loading("Deleting service request...");
-
-    try {
-      const response = await fetch(`/api/services/requests`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id: requestId }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setRequests((prev) =>
-          prev.filter((request) => request.id !== requestId)
-        );
-        toast.success("Service request deleted successfully", {
-          id: toastId,
-        });
-      } else {
-        throw new Error(data.error || "Failed to delete request");
-      }
-    } catch (error) {
-      toast.error("Error", {
-        description:
-          error instanceof Error ? error.message : "Failed to delete request",
+          error instanceof Error ? error.message : "Failed to accept request",
         id: toastId,
       });
     }
@@ -177,7 +133,7 @@ const ServiceRequests = () => {
     let filtered = requests;
 
     if (searchTerm) {
-      filtered = filtered.filter(
+      filtered = filtered?.filter(
         (request) =>
           request.customerName
             .toLowerCase()
@@ -192,7 +148,7 @@ const ServiceRequests = () => {
     }
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter((request) => request.status === statusFilter);
+      filtered = filtered?.filter((request) => request.status === statusFilter);
     }
 
     setFilteredRequests(filtered);
@@ -200,29 +156,53 @@ const ServiceRequests = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "accepted":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "completed":
+      case "in_progress":
         return "bg-blue-100 text-blue-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-yellow-100 text-yellow-800";
     }
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "in_progress":
+        return "In Progress";
+      case "completed":
+        return "Completed";
+      default:
+        return "Open";
+    }
+  };
+
   const getStatusCounts = () => {
+    const userAcceptedRequests = requests?.filter((request) =>
+      request.acceptedBy.includes(user?.id || "")
+    );
+
     return {
-      total: requests.length,
-      pending: requests.filter((r) => r.status === "pending").length,
-      accepted: requests.filter((r) => r.status === "accepted").length,
-      rejected: requests.filter((r) => r.status === "rejected").length,
-      completed: requests.filter((r) => r.status === "completed").length,
+      total: requests?.length,
+      open: requests?.filter((r) => r.status === "open")?.length,
+      in_progress: requests?.filter((r) => r.status === "in_progress")?.length,
+      completed: requests?.filter((r) => r.status === "completed")?.length,
+      acceptedByMe: userAcceptedRequests?.length,
+      acceptedByMeOpen: userAcceptedRequests?.filter((r) => r.status === "open")
+        ?.length,
+      acceptedByMeInProgress: userAcceptedRequests?.filter(
+        (r) => r.status === "in_progress"
+      )?.length,
+      acceptedByMeCompleted: userAcceptedRequests?.filter(
+        (r) => r.status === "completed"
+      )?.length,
     };
   };
 
   const statusCounts = getStatusCounts();
 
+  const hasUserAccepted = (request: ServiceRequest) => {
+    return user?.id && request.acceptedBy?.includes(user.id);
+  };
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -236,12 +216,13 @@ const ServiceRequests = () => {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Service Requests</h1>
         <p className="text-gray-600">
-          Manage service requests from your customers
+          Browse and manage service requests from customers
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      {/* Enhanced Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Total Requests */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -251,50 +232,57 @@ const ServiceRequests = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{statusCounts.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {statusCounts.acceptedByMe} accepted by you
+            </p>
           </CardContent>
         </Card>
+
+        {/* Open Requests */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium">Open</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {statusCounts.pending}
+              {statusCounts.open}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {statusCounts.acceptedByMeOpen} accepted by you
+            </p>
           </CardContent>
         </Card>
+
+        {/* In Progress */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accepted</CardTitle>
-            <Check className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {statusCounts.accepted}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-            <X className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {statusCounts.rejected}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
+              {statusCounts.in_progress}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {statusCounts.acceptedByMeInProgress} accepted by you
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Completed */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <Check className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
               {statusCounts.completed}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {statusCounts.acceptedByMeCompleted} accepted by you
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -324,14 +312,14 @@ const ServiceRequests = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="accepted_by_me">Accepted By Me</SelectItem>
               </SelectContent>
             </Select>
             <div className="text-sm text-gray-600 flex items-center">
-              {filteredRequests.length} requests found
+              {filteredRequests?.length} requests found
             </div>
           </div>
         </CardContent>
@@ -339,7 +327,7 @@ const ServiceRequests = () => {
 
       {/* Requests List */}
       <div className="space-y-4">
-        {filteredRequests.length === 0 ? (
+        {filteredRequests?.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -347,12 +335,16 @@ const ServiceRequests = () => {
                 No service requests
               </h3>
               <p className="text-gray-600">
-                You haven't received any service requests yet.
+                {statusFilter === "all"
+                  ? "There are no service requests available."
+                  : statusFilter === "accepted_by_me"
+                  ? "You haven't accepted any service requests yet."
+                  : `There are no ${statusFilter.replace("_", " ")} requests.`}
               </p>
             </CardContent>
           </Card>
         ) : (
-          filteredRequests.map((request) => (
+          filteredRequests?.map((request) => (
             <Card key={request.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -365,10 +357,22 @@ const ServiceRequests = () => {
                         `For ${format(new Date(request.eventDate), "PPP")}`}
                     </CardDescription>
                   </div>
-                  <Badge className={getStatusColor(request.status)}>
-                    {request.status.charAt(0).toUpperCase() +
-                      request.status.slice(1)}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(request.status)}>
+                      {getStatusText(request.status)}
+                    </Badge>
+                    {hasUserAccepted(request) && (
+                      <Badge className="bg-purple-100 text-purple-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Accepted
+                      </Badge>
+                    )}
+                    {request.status !== "open" && (
+                      <Badge variant="outline">
+                        {request.acceptedBy?.length}/5 Accepted
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -413,8 +417,8 @@ const ServiceRequests = () => {
                       Requested Services
                     </h4>
                   </div>
-                  <div className="grid grid-cols-4 gap-4">
-                    {request.selectedServices.map((service) => (
+                  <div className="grid grid-cols-3 gap-4">
+                    {request.selectedServices?.map((service) => (
                       <div key={service.id} className="border rounded-lg p-4">
                         <div className="flex items-start gap-4">
                           {service.image && (
@@ -426,10 +430,12 @@ const ServiceRequests = () => {
                           )}
                           <div className="flex-1">
                             <div className="flex justify-between">
-                              <h5 className="font-medium">{service.name}</h5>
+                              <h5 className="font-medium line-clamp-1">
+                                {service.name}
+                              </h5>
                             </div>
                             {service.description && (
-                              <p className="text-sm text-gray-600 mt-1">
+                              <p className="text-sm line-clamp-2 text-gray-600 mt-1">
                                 {service.description}
                               </p>
                             )}
@@ -446,47 +452,37 @@ const ServiceRequests = () => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex justify-between mt-6">
-                  <Button
-                    variant="destructive"
-                    onClick={() => deleteRequest(request.id)}
-                    size="sm"
-                  >
-                    Delete Request
-                  </Button>
-                  <div className="flex space-x-2">
-                    {request.status === "pending" && (
-                      <>
+                <div className="flex justify-end mt-6">
+                  {user ? (
+                    request.status === "open" ? (
+                      hasUserAccepted(request) ? (
+                        <div className="flex items-center gap-2 text-sm text-green-600">
+                          <CheckCircle className="h-4 w-4" />
+                          <span>You've accepted this request</span>
+                        </div>
+                      ) : (
                         <Button
-                          variant="destructive"
-                          onClick={() =>
-                            updateRequestStatus(request.id, "rejected")
-                          }
-                          size="sm"
+                          onClick={() => acceptRequest(request.id)}
+                          className="bg-[#6BADA0] hover:bg-[#8E9196]"
                         >
-                          Reject
+                          Accept Request
                         </Button>
-                        <Button
-                          onClick={() =>
-                            updateRequestStatus(request.id, "accepted")
-                          }
-                          size="sm"
-                        >
-                          Accept
-                        </Button>
-                      </>
-                    )}
-                    {request.status === "accepted" && (
-                      <Button
-                        onClick={() =>
-                          updateRequestStatus(request.id, "completed")
-                        }
-                        size="sm"
-                      >
-                        Mark as Completed
-                      </Button>
-                    )}
-                  </div>
+                      )
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {request.status === "in_progress"
+                            ? "Request in progress"
+                            : "Request completed"}
+                        </span>
+                      </div>
+                    )
+                  ) : (
+                    <Button disabled variant="outline">
+                      Sign in to accept requests
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
