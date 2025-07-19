@@ -1,3 +1,4 @@
+//api/services/requests/route.ts
 import { NextResponse } from "next/server";
 import { MongoClient, ObjectId } from "mongodb";
 import { cookies } from "next/headers";
@@ -19,6 +20,7 @@ const verifyToken = async (token: string): Promise<{ userId: string }> => {
   });
 };
 
+// api/services/requests/route.ts
 export async function GET(request: Request) {
   let client;
   try {
@@ -26,152 +28,85 @@ export async function GET(request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value;
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized", code: "UNAUTHORIZED" },
+        { status: 401 }
+      );
     }
 
     const decoded = await verifyToken(token);
     const businessId = decoded?.userId;
-    const { searchParams } = new URL(request.url);
 
-    const status = searchParams.get("status");
-    const search = searchParams.get("search");
+    const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const filter = searchParams.get("filter") || "all"; // 'all', 'accepted', 'open'
-
-    if (!businessId) {
-      return NextResponse.json(
-        { error: "Business ID is required" },
-        { status: 400 }
-      );
-    }
+    const status = searchParams.get("status") || "";
+    const filter = searchParams.get("filter") || "all";
+    const search = searchParams.get("search") || "";
 
     client = await MongoClient.connect(process.env.MONGODB_URI!);
     const db = client.db();
 
-    // Base query for all requests
-    const allRequestsQuery: any = {};
+    // Base query
+    const query: any = {};
 
-    // Query for requests accepted by this business
-    const acceptedRequestsQuery = { acceptedBy: businessId };
-
-    // Query for open requests not yet accepted by this business
-    const openRequestsQuery = {
-      status: "open",
-      acceptedBy: { $nin: [businessId] },
-    };
-
-    // Apply search if provided
     if (search) {
-      const searchQuery = {
-        $or: [
-          { customerName: { $regex: search, $options: "i" } },
-          { customerEmail: { $regex: search, $options: "i" } },
-          { addressRequestingService: { $regex: search, $options: "i" } },
-          { "selectedServices.name": { $regex: search, $options: "i" } },
-        ],
-      };
-
-      allRequestsQuery.$and = [searchQuery];
-      acceptedRequestsQuery.$and = [searchQuery];
-      openRequestsQuery.$and = [searchQuery];
+      query.$or = [
+        { customerName: { $regex: search, $options: "i" } },
+        { customerEmail: { $regex: search, $options: "i" } },
+        { addressRequestingService: { $regex: search, $options: "i" } },
+      ];
     }
 
-    // Apply status filter if provided
     if (status && status !== "all") {
-      allRequestsQuery.status = status;
-      acceptedRequestsQuery.status = status;
-      openRequestsQuery.status = status;
+      query.status = status;
     }
 
-    // Determine which query to use based on filter
-    let finalQuery = allRequestsQuery;
-    if (filter === "accepted") {
-      finalQuery = { ...acceptedRequestsQuery };
-    } else if (filter === "open") {
-      finalQuery = { ...openRequestsQuery };
+    if (filter === "accepted_by_me") {
+      query.acceptedBy = businessId;
     }
 
-    // Get counts for all categories in parallel
-    const [
-      totalRequests,
-      openRequests,
-      inProgressRequests,
-      completedRequests,
-      acceptedByMe,
-      acceptedByMeOpen,
-      acceptedByMeInProgress,
-      acceptedByMeCompleted,
-      filteredCount,
-      requests,
-    ] = await Promise.all([
-      // Global counts
-      db.collection("serviceRequests").countDocuments({}),
-      db.collection("serviceRequests").countDocuments({ status: "open" }),
-      db
-        .collection("serviceRequests")
-        .countDocuments({ status: "in_progress" }),
-      db.collection("serviceRequests").countDocuments({ status: "completed" }),
+    const total = await db.collection("serviceRequests").countDocuments(query);
+    const totalPages = Math.ceil(total / limit);
 
-      // Counts for this business
-      db
-        .collection("serviceRequests")
-        .countDocuments({ acceptedBy: businessId }),
-      db.collection("serviceRequests").countDocuments({
-        acceptedBy: businessId,
-        status: "open",
-      }),
-      db.collection("serviceRequests").countDocuments({
-        acceptedBy: businessId,
-        status: "in_progress",
-      }),
-      db.collection("serviceRequests").countDocuments({
-        acceptedBy: businessId,
-        status: "completed",
-      }),
+    let requests = await db
+      .collection("serviceRequests")
+      .find(query)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
 
-      // Filtered count and results
-      db.collection("serviceRequests").countDocuments(finalQuery),
-      db
-        .collection("serviceRequests")
-        .find(finalQuery)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .toArray(),
-    ]);
+    // Add isAllowedToAccept field to each request
+    requests = requests.map((request) => {
+      const acceptedCount = request.acceptedBy?.length || 0;
+      const hasAccepted =
+        businessId && request.acceptedBy?.includes(businessId);
+      const isOpenForAcceptance =
+        (request.status === "open" || request.status === "in_progress") &&
+        acceptedCount < 5 &&
+        !hasAccepted;
 
-    const sanitizedRequests = requests.map(({ _id, ...request }) => ({
-      ...request,
-      id: _id.toString(),
-    }));
+      return {
+        ...request,
+        id: request._id.toString(),
+        acceptedByCount: acceptedCount,
+        isAllowedToAccept: isOpenForAcceptance,
+      };
+    });
 
     return NextResponse.json({
-      serviceRequests: sanitizedRequests,
+      serviceRequests: requests,
       pagination: {
         page,
         limit,
-        total: filteredCount,
-        totalPages: Math.ceil(filteredCount / limit),
-      },
-      counts: {
-        // Global counts
-        total: totalRequests,
-        open: openRequests,
-        in_progress: inProgressRequests,
-        completed: completedRequests,
-
-        // Business-specific counts
-        acceptedByMe,
-        acceptedByMeOpen,
-        acceptedByMeInProgress,
-        acceptedByMeCompleted,
+        total,
+        totalPages,
       },
     });
   } catch (error) {
-    console.error("Get service requests error:", error);
+    console.error("Fetch service requests error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", code: "INTERNAL_SERVER_ERROR" },
       { status: 500 }
     );
   } finally {
@@ -188,16 +123,23 @@ export async function PUT(request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value;
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized", code: "UNAUTHORIZED" },
+        { status: 401 }
+      );
     }
 
     const decoded = await verifyToken(token);
     const businessId = decoded?.userId;
     const { id } = await request.json();
 
+    // Validation
     if (!id || !businessId) {
       return NextResponse.json(
-        { error: "ID and business ID are required" },
+        {
+          error: "ID and business ID are required",
+          code: "MISSING_REQUIRED_FIELDS",
+        },
         { status: 400 }
       );
     }
@@ -205,40 +147,71 @@ export async function PUT(request: Request) {
     client = await MongoClient.connect(process.env.MONGODB_URI!);
     const db = client.db();
 
-    // First get the current request
+    // Fetch current request
     const currentRequest = await db
       .collection("serviceRequests")
       .findOne({ _id: new ObjectId(id) });
 
     if (!currentRequest) {
       return NextResponse.json(
-        { error: "Service request not found" },
+        { error: "Service request not found", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
-    // Check if business already accepted
-    if (currentRequest.acceptedBy.includes(businessId)) {
+    // Check business rules
+    const acceptedBy = currentRequest.acceptedBy || [];
+    const acceptedCount = acceptedBy.length;
+
+    // Rule 1: Already accepted by this business
+    if (acceptedBy.includes(businessId)) {
       return NextResponse.json(
-        { error: "You have already accepted this request" },
+        {
+          error: "You have already accepted this request",
+          code: "ALREADY_ACCEPTED",
+        },
         { status: 400 }
       );
     }
 
-    // Update the request
-    const acceptedBy = [...currentRequest.acceptedBy, businessId];
+    // Rule 2: Maximum acceptances reached
+    if (acceptedCount >= 5) {
+      return NextResponse.json(
+        {
+          error: "Maximum providers (5) have already accepted this request",
+          code: "MAX_ACCEPTANCES_REACHED",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Rule 3: Request must be open or in_progress
+    if (!["open", "in_progress"].includes(currentRequest.status)) {
+      return NextResponse.json(
+        {
+          error: "This request is no longer accepting providers",
+          code: "REQUEST_NOT_ACCEPTING",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Prepare update
+    const newAcceptedBy = [...acceptedBy, businessId];
     let newStatus = currentRequest.status;
 
-    // Update status based on business type or other logic if needed
-    if (newStatus === "open") {
+    // Update status to in_progress if this is the first acceptance
+    if (newAcceptedBy.length === 1 && currentRequest.status === "open") {
       newStatus = "in_progress";
     }
 
+    // Execute update
     const result = await db.collection("serviceRequests").updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
-          acceptedBy,
+          acceptedBy: newAcceptedBy,
+          acceptedByCount: newAcceptedBy.length,
           status: newStatus,
           updatedAt: new Date(),
         },
@@ -247,20 +220,27 @@ export async function PUT(request: Request) {
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
-        { error: "Service request not found" },
+        { error: "Service request not found", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
+    // Success response
     return NextResponse.json({
       success: true,
       message: "Service request accepted successfully",
-      status: newStatus,
+      data: {
+        status: newStatus,
+        acceptedByCount: newAcceptedBy.length,
+      },
     });
   } catch (error) {
     console.error("Accept service request error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        code: "INTERNAL_SERVER_ERROR",
+      },
       { status: 500 }
     );
   } finally {
@@ -284,7 +264,20 @@ export async function POST(request: Request) {
       serviceRequestData.selectedServices.length === 0
     ) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error: "Missing required fields",
+          code: "MISSING_REQUIRED_FIELDS",
+          details: {
+            missingFields: [
+              !serviceRequestData.customerName && "customerName",
+              !serviceRequestData.customerEmail && "customerEmail",
+              !serviceRequestData.customerPhone && "customerPhone",
+              (!serviceRequestData.selectedServices ||
+                serviceRequestData.selectedServices.length === 0) &&
+                "selectedServices",
+            ].filter(Boolean),
+          },
+        },
         { status: 400 }
       );
     }
@@ -323,7 +316,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Create service request error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        code: "INTERNAL_SERVER_ERROR",
+      },
       { status: 500 }
     );
   } finally {
