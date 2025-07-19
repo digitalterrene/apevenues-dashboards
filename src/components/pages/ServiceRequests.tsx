@@ -521,20 +521,6 @@ const ServiceRequests = () => {
                   </div>
 
                   {/* Action buttons */}
-                  {/* Debug information - can remove after testing */}
-                  <div className="text-xs text-gray-500 mb-2">
-                    <p>Accepted by count: {request.acceptedByCount || 0}/5</p>
-                    <p>
-                      Have I accepted it:{" "}
-                      {hasUserAccepted(request) ? "Yes" : "No"}
-                    </p>
-                    <p>
-                      Am I allowed to accept:{" "}
-                      {request.isAllowedToAccept ? "Yes" : "No"}
-                    </p>
-                    <p>Status: {request.status}</p>
-                  </div>
-
                   <div className="flex justify-end mt-6">
                     {user ? (
                       hasUserAccepted(request) ? (
