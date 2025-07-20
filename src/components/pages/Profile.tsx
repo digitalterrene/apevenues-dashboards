@@ -1,6 +1,5 @@
-
-'use client'
-import ProfileSettings from '../dashboard/ProfileSettings';
+"use client";
+import ProfileSettings from "../dashboard/ProfileSettings";
 
 const Profile = () => {
   return <ProfileSettings />;

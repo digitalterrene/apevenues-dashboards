@@ -33,13 +33,7 @@ export async function POST(request: Request) {
     const serviceData: any = await request.json();
 
     // Validation
-    const requiredFields = [
-      "name",
-      "description",
-      "price",
-      "duration",
-      "category",
-    ];
+    const requiredFields = ["name", "description", "category"];
     const missingFields = requiredFields.filter((field) => !serviceData[field]);
     if (missingFields.length > 0) {
       return NextResponse.json(

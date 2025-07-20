@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Sparkles,
-  User,
-} from "lucide-react";
+import { ChevronsUpDown, CreditCard, LogOut, User } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -28,7 +20,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export function NavUser({}: {}) {
   const { isMobile } = useSidebar();
@@ -85,18 +76,20 @@ export function NavUser({}: {}) {
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link href={user?._id ? "/dashboard/profile" : "#"}>
-                <DropdownMenuItem className="cursor-pointer">
-                  <User />
-                  Account
-                </DropdownMenuItem>
-              </Link>
-              <Link href={user?._id ? "/dashboard/subscriptions" : "#"}>
-                <DropdownMenuItem className="cursor-pointer">
-                  <CreditCard />
-                  Billing
-                </DropdownMenuItem>
-              </Link>
+              <DropdownMenuItem
+                onClick={() => router.push("/dashboard/profile")}
+                className="cursor-pointer"
+              >
+                <User />
+                Account
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/dashboard/subscriptions")}
+                className="cursor-pointer"
+              >
+                <CreditCard />
+                Billing
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

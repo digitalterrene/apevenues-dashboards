@@ -1,17 +1,6 @@
 "use client";
 import * as React from "react";
-import {
-  Home,
-  Building2,
-  User,
-  LogOut,
-  CreditCard,
-  Calendar,
-  Luggage,
-  Sparkles,
-  Bell,
-  LayoutList,
-} from "lucide-react";
+import { User, CreditCard, Key } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -26,7 +15,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { NavUser } from "@/components/nav-user";
+import { toast } from "sonner";
+import { Button } from "./ui/button";
 
 interface NavigationItem {
   path: string;
@@ -36,58 +26,31 @@ interface NavigationItem {
   subPaths?: string[];
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, logout } = useAuth();
+export function AdminAppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const pathname = usePathname();
   const { open } = useSidebar();
 
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth", {
+        method: "DELETE",
+      });
+      window.location.href = "/admin/login";
+    } catch (error) {
+      toast.error("Logout failed");
+    }
   };
 
-  const propertyProviderSpecificNavigationItems: NavigationItem[] = [
-    {
-      path: "/dashboard/properties",
-      label: "Properties",
-      icon: Building2,
-      subPaths: ["/dashboard/properties/create", "/dashboard/properties/edit"],
-    },
-    { path: "/dashboard/bookings", label: "Bookings", icon: Calendar },
-  ];
-
-  const serviceProviderSpecificNavigationItems: NavigationItem[] = [
-    {
-      path: "/dashboard/services",
-      label: "Services Offered",
-      icon: Luggage,
-    },
-    {
-      path: "/dashboard/service-requests",
-      label: "Service Requests",
-      icon: Bell,
-    },
-  ];
-
-  const commonNavigationItems: NavigationItem[] = [
-    { path: "/dashboard", label: "Dashboard", icon: Home, exact: true },
-  ];
-
-  const additionalNavigationItems =
-    user?.businessType === "service-provider"
-      ? serviceProviderSpecificNavigationItems
-      : propertyProviderSpecificNavigationItems;
-
   const navigationItems: NavigationItem[] = [
-    ...commonNavigationItems,
-    ...additionalNavigationItems,
     {
-      path: "/dashboard/subscriptions",
-      label: "Subscriptions",
-      icon: CreditCard,
+      path: "#",
+      label: "Key Bundles",
+      icon: Key,
     },
-    { path: "/dashboard/profile", label: "Profile", icon: User },
+    { path: "#", label: "Subscriptions", icon: CreditCard },
   ];
 
   const isActive = (item: NavigationItem) => {
@@ -157,7 +120,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser />
+        <Button
+          variant="outline"
+          className="w-full mt-8"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

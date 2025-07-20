@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useProperties } from "@/hooks/useProperties";
-
 import {
   Card,
   CardContent,
@@ -65,6 +64,7 @@ const ServicePropertyListing = () => {
             serviceId: selectedService.id,
             price: selectedService.price,
             duration: selectedService.duration,
+            name: selectedService.name,
             description: selectedService.description,
             category: selectedService.category,
             image: selectedService.image,
