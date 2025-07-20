@@ -23,7 +23,7 @@ export const AdminLogin = () => {
 
       const data = await response.json();
       if (response.ok) {
-        router.push("/admin/dashboard");
+        router.push("/admin/");
       } else {
         toast.error(data.error || "Login failed");
       }
