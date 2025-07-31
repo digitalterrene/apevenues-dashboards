@@ -1,9 +1,41 @@
+// components/pages/Subscriptions.tsx
 "use client";
 import React from "react";
-
 import { KeyBundles } from "../subscriptions/services/KeyBundles";
+import { Plan } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const Subscriptions = () => {
+interface SubscriptionsProps {
+  plans: Plan[];
+  error?: string | null;
+}
+
+const Subscriptions = ({ plans, error }: SubscriptionsProps) => {
+  const { user } = useAuth();
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (plans.length === 0) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-[200px] w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,7 +45,11 @@ const Subscriptions = () => {
         </p>
       </div>
       <div>
-        <KeyBundles />
+        {user?.businessType === "service-provider" ? (
+          <KeyBundles plans={plans} />
+        ) : (
+          <div>Plans for property owners come here</div>
+        )}
       </div>
     </div>
   );
