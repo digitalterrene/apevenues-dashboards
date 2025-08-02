@@ -68,3 +68,12 @@ export interface Amenity {
   description: string;
   icon: string;
 }
+export type Plan = {
+  type: string;
+  keys_count: number;
+  price: number;
+  url: `https://${string}`;
+  name: string;
+  description: string;
+  id: string;
+};
