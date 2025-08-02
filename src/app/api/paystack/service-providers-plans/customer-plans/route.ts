@@ -140,6 +140,7 @@ export async function GET(request: NextRequest) {
       "Key Bundle Two": 10000,
       "Key Bundle Three": 30000,
     };
+
     console.log({ transactionsResponse: transactionsResponse.data });
     const activePlans: ActivePlan[] = transactionsResponse.data
       .map((transaction) => {
@@ -174,7 +175,38 @@ export async function GET(request: NextRequest) {
         };
       })
       .filter(Boolean) as ActivePlan[];
+    // After getting activePlans:
+    const planKeyCounts: Record<string, number> = {
+      "Key Bundle One": 30,
+      "Key Bundle Two": 100,
+      "Key Bundle Three": 300,
+    };
 
+    // Sync key bundles to database
+    const keyBundlesCollection = db.collection("keyBundles");
+    for (const plan of activePlans) {
+      const existingBundle = await keyBundlesCollection.findOne({
+        transactionId: plan.planId,
+      });
+
+      if (!existingBundle) {
+        const keyCount = planKeyCounts[plan.planName] || 0;
+
+        if (keyCount > 0) {
+          const newBundle = {
+            userId: new ObjectId(decoded.userId),
+            transactionId: plan.planId,
+            bundleName: plan.planName,
+            totalKeys: keyCount,
+            keysUsed: 0,
+            keysRemaining: keyCount,
+            purchaseDate: new Date(plan.purchaseDate),
+          };
+
+          await keyBundlesCollection.insertOne(newBundle);
+        }
+      }
+    }
     return NextResponse.json({
       success: true,
       activePlans,

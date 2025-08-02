@@ -1,30 +1,36 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Plan } from "@/types";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface KeyBundlesProps {
-  plans: Plan[];
+interface PropertyProviderPlanProps {
+  plans: {
+    type: string;
+    plan_amount: number;
+    url: `https://${string}`;
+    name: `${string} Plan`;
+    plan_code: `PLN_${string}`;
+    description: string;
+    id: `PLN_${string}`;
+  }[];
 }
 
-export const KeyBundles = ({ plans }: KeyBundlesProps) => {
+export const ProperyProvidersPlans = ({ plans }: PropertyProviderPlanProps) => {
   const { user } = useAuth();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid   grid-cols-1 md:grid-cols-3 gap-6">
       {plans?.map((plan) => (
         <div
           key={plan?.id}
           className="border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
         >
           <h3 className="text-xl font-bold">{plan?.name}</h3>
-          <p className="text-gray-600 mt-2">{plan?.description}</p>
+          <p className="text-gray-600 line-clamp-3 mt-2">{plan?.description}</p>
           <div className="mt-4">
             <p className="text-2xl font-semibold">
-              R{(plan?.price / 100).toFixed(2)}
+              R{(plan?.plan_amount / 100).toFixed(2)}
             </p>
-            <p className="text-gray-500">{plan?.keys_count} keys</p>
           </div>
           {user?._id ? (
             <Button

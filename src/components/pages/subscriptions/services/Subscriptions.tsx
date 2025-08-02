@@ -1,7 +1,7 @@
-// components/pages/Subscriptions.tsx
 "use client";
+// components/pages/Subscriptions.tsx
 import React from "react";
-import { KeyBundles } from "../subscriptions/services/KeyBundles";
+import { KeyBundles } from "../../../subscriptions/services/KeyBundles";
 import { Plan } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -26,10 +26,10 @@ const Subscriptions = ({ plans, error }: SubscriptionsProps) => {
     );
   }
 
-  if (plans.length === 0) {
+  if (plans?.length === 0) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[...Array(3)].map((_, i) => (
+        {[...Array(3)]?.map((_, i) => (
           <Skeleton key={i} className="h-[200px] w-full rounded-lg" />
         ))}
       </div>
@@ -44,13 +44,7 @@ const Subscriptions = ({ plans, error }: SubscriptionsProps) => {
           Choose the perfect plan for your business needs
         </p>
       </div>
-      <div>
-        {user?.businessType === "service-provider" ? (
-          <KeyBundles plans={plans} />
-        ) : (
-          <div>Plans for property owners come here</div>
-        )}
-      </div>
+      <KeyBundles plans={plans} />
     </div>
   );
 };

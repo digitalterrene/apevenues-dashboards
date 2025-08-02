@@ -11,6 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,6 +44,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "../ui/label";
 
 interface Service {
   id: string;
@@ -70,13 +79,27 @@ interface Pagination {
   total: number;
   totalPages: number;
 }
-
+interface KeyBundle {
+  _id: string;
+  bundleName: string;
+  keysRemaining: number;
+  purchaseDate: Date;
+}
 const ServiceRequests = () => {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isAccepting, setIsAccepting] = useState<string | null>(null);
+  ///////////////////////
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
+    null
+  );
+  const [keyBundles, setKeyBundles] = useState<KeyBundle[]>([]);
+  const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
+  const [isLoadingBundles, setIsLoadingBundles] = useState(false);
+  const [acceptModalOpen, setAcceptModalOpen] = useState(false);
+  //////////////////////
   const { user } = useAuth();
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -84,7 +107,36 @@ const ServiceRequests = () => {
     total: 0,
     totalPages: 1,
   });
+  // New function to fetch key bundles
+  const fetchKeyBundles = async () => {
+    try {
+      setIsLoadingBundles(true);
+      const response = await fetch(
+        "/api/paystack/service-providers-plans/keys/bundles"
+      );
+      const data = await response.json();
 
+      if (response.ok && data.success) {
+        setKeyBundles(
+          data.bundles.map((bundle: any) => ({
+            _id: bundle._id.toString(),
+            bundleName: bundle.bundleName,
+            keysRemaining: bundle.keysRemaining,
+            purchaseDate: new Date(bundle.purchaseDate),
+          }))
+        );
+      } else {
+        throw new Error(data.error || "Failed to fetch key bundles");
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description:
+          error instanceof Error ? error.message : "Failed to load key bundles",
+      });
+    } finally {
+      setIsLoadingBundles(false);
+    }
+  };
   const fetchServiceRequests = async () => {
     try {
       setIsLoading(true);
@@ -115,24 +167,37 @@ const ServiceRequests = () => {
     }
   };
 
+  // Modified accept request function
   const acceptRequest = async (requestId: string) => {
-    setIsAccepting(requestId);
+    if (!selectedBundle) {
+      toast.error("Error", {
+        description: "Please select a key bundle to use",
+      });
+      return;
+    }
+
     const toastId = toast.loading("Accepting service request...");
 
     try {
-      const response = await fetch(`/api/services/requests`, {
-        method: "PUT",
+      const response = await fetch("/api/services/requests/accept", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: requestId }),
+        body: JSON.stringify({
+          requestId,
+          bundleId: selectedBundle,
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("Service request accepted!", { id: toastId });
+        toast.success(data.message, { id: toastId });
         fetchServiceRequests(); // Refresh the list
+        setAcceptModalOpen(false);
+        setSelectedRequestId(null);
+        setSelectedBundle(null);
       } else {
         throw new Error(data.error || "Failed to accept request");
       }
@@ -146,7 +211,12 @@ const ServiceRequests = () => {
       setIsAccepting(null);
     }
   };
-
+  // Open accept modal
+  const openAcceptModal = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setAcceptModalOpen(true);
+    fetchKeyBundles();
+  };
   useEffect(() => {
     if (user) {
       fetchServiceRequests();
@@ -530,7 +600,7 @@ const ServiceRequests = () => {
                         </div>
                       ) : request.isAllowedToAccept ? (
                         <Button
-                          onClick={() => acceptRequest(request.id)}
+                          onClick={() => openAcceptModal(request.id)}
                           className="bg-[#6BADA0] hover:bg-[#5a9c8f]"
                           disabled={isAccepting === request.id}
                         >
@@ -586,6 +656,89 @@ const ServiceRequests = () => {
                 </Button>
               </div>
             )}
+            {/* Key Bundle Selection Modal */}
+            <Dialog open={acceptModalOpen} onOpenChange={setAcceptModalOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Select Key Bundle</DialogTitle>
+                  <DialogDescription>
+                    Choose a key bundle to use for accepting this service
+                    request
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <p className="text-sm">
+                    This request requires{" "}
+                    <span className="font-medium">1 key</span>.
+                  </p>
+
+                  {isLoadingBundles ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : keyBundles.length === 0 ? (
+                    <div className="text-center py-4 text-sm text-gray-500">
+                      No available key bundles. Please purchase a key bundle
+                      first.
+                    </div>
+                  ) : (
+                    <RadioGroup
+                      value={selectedBundle || ""}
+                      onValueChange={setSelectedBundle}
+                    >
+                      {keyBundles.map((bundle) => (
+                        <div
+                          key={bundle._id}
+                          className="flex items-center space-x-3"
+                        >
+                          <RadioGroupItem value={bundle._id} id={bundle._id} />
+                          <Label htmlFor={bundle._id} className="flex-1">
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium">
+                                {bundle.bundleName}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {bundle.keysRemaining} keys remaining
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Purchased:{" "}
+                              {format(bundle.purchaseDate, "MMM d, yyyy")}
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setAcceptModalOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        selectedRequestId && acceptRequest(selectedRequestId)
+                      }
+                      className="bg-[#6BADA0] hover:bg-[#5a9c8f]"
+                      disabled={!selectedBundle || isAccepting !== null}
+                    >
+                      {isAccepting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        "Accept Request"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </div>
