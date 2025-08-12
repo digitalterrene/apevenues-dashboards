@@ -34,11 +34,16 @@ export default function Footer() {
                     <Link href={"/signup"}>List Your Venue</Link>
                   </li>
                   <li className="hover:text-[#6BADA0]">
+                    <Link href={"/login"}> List Your Service</Link>
+                  </li>
+                  <li className="hover:text-[#6BADA0]">
                     <Link href={"/login"}> Business Login</Link>
                   </li>
-                  {/* <li className="hover:text-[#6BADA0]">
-                <Link href={"/pricing-plans"}>Pricing Plans</Link>
-              </li> */}
+                  <li className="hover:text-[#6BADA0]">
+                    <Link href={"/dashboard/subscriptions"}>
+                      Subscription Plans
+                    </Link>
+                  </li>
                 </ul>
               </div>
               <div>

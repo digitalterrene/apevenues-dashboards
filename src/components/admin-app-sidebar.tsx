@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
+import Image from "next/image";
 
 interface NavigationItem {
   path: string;
@@ -74,15 +75,13 @@ export function AdminAppSidebar({
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent cursor-pointer data-[state=open]:text-sidebar-accent-foreground"
               >
-                <div className="bg-[#6BADA0] text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  APE
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    Amalgamated Properties & Events
-                  </span>
-                  <span className="truncate text-xs">Business Dashboard</span>
-                </div>
+                <Image
+                  alt="APE Dashboard Logo"
+                  height={14}
+                  width={200}
+                  src={"/logo.svg"}
+                  className="  font-serif font-bold"
+                />
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

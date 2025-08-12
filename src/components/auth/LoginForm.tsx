@@ -34,7 +34,10 @@ const LoginForm = () => {
         toast.success("Welcome back!", {
           description: "You have successfully logged in.",
         });
-        router.push("/dashboard");
+        router.refresh();
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 2000);
       } else {
         toast.error("Login failed", {
           description: "Invalid email or password.",

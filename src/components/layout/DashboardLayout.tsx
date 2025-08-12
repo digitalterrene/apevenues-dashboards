@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { NavUser } from "../nav-user";
+import Image from "next/image";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, logout } = useAuth();
@@ -54,17 +55,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Sidebar */}
         <Sidebar className="absolute h-full">
           <SidebarHeader className="p-6 border-b">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-[#6BADA0] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-[#6BADA0]">
-                  APE Dashboard
-                </h1>
-                <p className="text-xs text-gray-600">Business Dashboard</p>
-              </div>
-            </div>
+            <Image
+              alt="APE Dashboard Logo"
+              height={12}
+              width={200}
+              src={"/logo.svg"}
+              className=" h-12 font-serif font-bold"
+            />
+            sfd
           </SidebarHeader>
 
           <SidebarContent className="p-4">

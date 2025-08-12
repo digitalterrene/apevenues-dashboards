@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import path from "path";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import Image from "next/image";
 
 export default function Header() {
   const router = useRouter();
@@ -16,19 +17,23 @@ export default function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Link href={"/"} className="flex items-center  ">
-              <span className="text-3xl font-serif font-bold">
-                A<span className="text-[#6BADA0]">P</span>E
-              </span>
+              <Image
+                alt="APE Dashboard Logo"
+                height={12}
+                width={200}
+                src={"/logo.svg"}
+                className=" h-12 font-serif font-bold"
+              />
             </Link>
           </div>
           <div className="flex items-center space-x-4">
             <Button
               onClick={() => router.push("/listings")}
               variant="outline"
-              className="border-[#6BADA0] cursor-pointer text-[#6BADA0] hover:bg-[#6BADA0] hover:text-white"
+              className="border-[#6BADA0] lg:ml-0 ml-4 cursor-pointer text-[#6BADA0] hover:bg-[#6BADA0] hover:text-white"
             >
-              <Search className="h-4 w-4 mr-2" />
-              Find Venues
+              <Search className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:block"> Find Venues</span>
             </Button>
             <Link href={!(user?._id || user?.id) ? "/login" : "/dashboard"}>
               <Button

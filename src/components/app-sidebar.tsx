@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { NavUser } from "@/components/nav-user";
+import Image from "next/image";
 
 interface NavigationItem {
   path: string;
@@ -41,7 +42,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const pathname = usePathname();
   const { open } = useSidebar();
-
   const handleLogout = () => {
     logout();
     router.push("/login");
@@ -111,15 +111,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent cursor-pointer data-[state=open]:text-sidebar-accent-foreground"
               >
-                <div className="bg-[#6BADA0] text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  APE
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    Amalgamated Properties & Events
-                  </span>
-                  <span className="truncate text-xs">Business Dashboard</span>
-                </div>
+                <Image
+                  alt="APE Dashboard Logo"
+                  height={16}
+                  width={150}
+                  src={open ? "/logo.svg" : "logo-sm.svg"}
+                  className=" h-12 font-serif font-bold"
+                />
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
