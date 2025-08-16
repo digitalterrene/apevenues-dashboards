@@ -15,6 +15,7 @@ import {
   Star,
   ArrowRight,
   Search,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import "./App.css";
@@ -56,11 +57,12 @@ const Index = () => {
       {/* Hero Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6">
             Connect Venues with
+            <br />
             <span className="text-[#6BADA0]"> Perfect Events</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="lg:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Whether you're a venue owner looking to reach more customers or an
             event planner searching for the perfect space, APE Dashboard makes
             it simple.
@@ -69,20 +71,29 @@ const Index = () => {
             <Button
               onClick={() => router.push("/listings")}
               size="lg"
-              className="bg-[#6BADA0] cursor-pointer hover:bg-[#6BADA0]/60 hover:text-black text-lg px-8 py-3"
+              className="bg-[#6BADA0] cursor-pointer hover:bg-[#6BADA0]/60 hover:text-black lg:text-lg px-8 py-3"
             >
               <Search className="h-5 w-5 mr-2" />
               Find Venues
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
             <Button
-              onClick={() => router.push("/signup")}
+              onClick={() => router.push("/dashboard/properties/new")}
               size="lg"
               variant="outline"
-              className="border-[#6BADA0] cursor-pointer text-[#6BADA0] hover:text-white hover:bg-[#6BADA0] text-lg px-8 py-3"
+              className="border-[#6BADA0] cursor-pointer text-[#6BADA0] hover:text-white hover:bg-[#6BADA0] lg:text-lg px-8 py-3"
             >
               <Building2 className="h-5 w-5 mr-2" />
               List Your Venue
+            </Button>
+            <Button
+              onClick={() => router.push("/dashboard/services/new")}
+              size="lg"
+              variant="outline"
+              className="border-[#6BADA0] cursor-pointer text-[#6BADA0] hover:text-white hover:bg-[#6BADA0] lg:text-lg px-8 py-3"
+            >
+              <BriefcaseBusiness className="h-5 w-5 mr-2" />
+              List Your Service
             </Button>
           </div>
         </div>
@@ -92,10 +103,10 @@ const Index = () => {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl lg:text-3xl font-bold text-gray-900 mb-4">
               Why Choose APE Dashboard?
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="lg:text-xl text-gray-600">
               Everything you need to manage your venue business and connect with
               customers
             </p>
@@ -130,10 +141,10 @@ const Index = () => {
       {/* CTA Section */}
       <section className="py-20 bg-[#6BADA0]">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
             Ready to Get Started?
           </h2>
-          <p className="text-xl text-[#F1F0FB] mb-8">
+          <p className="lg:text-xl text-[#F1F0FB] mb-8">
             Join thousands of venue owners who trust APE Dashboard to grow their
             business
           </p>
@@ -142,7 +153,7 @@ const Index = () => {
               onClick={() => router.push("/signup")}
               size="lg"
               variant="secondary"
-              className="bg-white cursor-pointer text-[#6BADA0] hover:bg-gray-50 text-lg px-8 py-3"
+              className="bg-white cursor-pointer text-[#6BADA0] hover:bg-gray-50 lg:text-lg px-8 py-3"
             >
               Start Free Trial
             </Button>
@@ -150,7 +161,7 @@ const Index = () => {
               onClick={() => router.push("/listings")}
               size="lg"
               variant="outline"
-              className="border-white cursor-pointer hover:text-white hover:bg-[#8E9196] text-lg px-8 py-3"
+              className="border-white cursor-pointer hover:text-white hover:bg-[#8E9196] lg:text-lg px-8 py-3"
             >
               Browse Venues
             </Button>

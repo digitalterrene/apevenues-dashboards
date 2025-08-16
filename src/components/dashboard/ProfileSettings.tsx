@@ -92,7 +92,7 @@ const ProfileSettings = () => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 mt-3  ">
         {/* Rest of your form remains the same */}
         {/* Business Information */}
         <Card>

@@ -15,7 +15,7 @@ export default function Footer() {
               <div>
                 <div className="flex items-center space-x-3">
                   <Link className="" href={"/"}>
-                    <h1 className="text-2xl font-bold text-white">
+                    <h1 className="text-xl lg:text-2xl font-bold text-white">
                       APE{" "}
                       {pathname !== "/listings"
                         ? "Dashboard"
@@ -76,8 +76,8 @@ export default function Footer() {
                 </ul>
               </div>
             </div>
-            <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-              <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="border-t border-gray-800 mt-8 pt-8 lg:text-center text-gray-400">
+              <div className="lg:flex flex-col md:flex-row justify-between items-center">
                 <p className="text-gray-400 mb-4 md:mb-0">
                   &copy; {currentYear} APE - Amalgamated Property & Events. All
                   rights reserved.

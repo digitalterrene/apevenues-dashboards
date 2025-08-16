@@ -111,13 +111,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent cursor-pointer data-[state=open]:text-sidebar-accent-foreground"
               >
-                <Image
-                  alt="APE Dashboard Logo"
-                  height={16}
-                  width={150}
-                  src={open ? "/logo.svg" : "logo-sm.svg"}
-                  className=" h-12 font-serif font-bold"
-                />
+                <div className="bg-[#6BADA0] font-bold text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  APE
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">
+                    Amalgamated Properties & Events
+                  </span>
+                  <span className="truncate text-xs">Business Dashboard</span>
+                </div>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

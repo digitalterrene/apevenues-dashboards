@@ -22,10 +22,14 @@ async function fetchSubscriptionData(
 
   // --- Fetch all available plans for the given type ---
   try {
-    const plansResponse = await fetch(
-      `${baseUrl}/api/paystack/${planType}-plans`,
-      { cache: "no-store" } // Ensures fresh data on every request
-    );
+    const endpoint =
+      planType === "property-providers"
+        ? `${baseUrl}/api/paystack/${planType}/unlock-booking-request`
+        : `${baseUrl}/api/paystack/${planType}-plans`;
+
+    const plansResponse = await fetch(endpoint, {
+      cache: "no-store",
+    });
 
     if (!plansResponse.ok) {
       throw new Error(`HTTP error! status: ${plansResponse.status}`);
@@ -33,7 +37,9 @@ async function fetchSubscriptionData(
 
     const plansData = await plansResponse.json();
     if (plansData.success) {
-      plans = plansData.plans;
+      // For property providers, we get a single plan object, convert it to array
+      plans =
+        planType === "property-providers" ? [plansData.plan] : plansData.plans;
     } else {
       throw new Error(plansData.error || `Failed to fetch ${planType} plans`);
     }
@@ -44,7 +50,6 @@ async function fetchSubscriptionData(
         ? err.message
         : `Failed to load ${planType} subscription plans`;
   }
-
   // --- Fetch the user's active plans for the given type ---
   // This requires an auth token.
   if (token) {

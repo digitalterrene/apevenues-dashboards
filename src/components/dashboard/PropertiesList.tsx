@@ -19,6 +19,13 @@ import {
 import { Property } from "../../types";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 const PropertiesList = () => {
   const { properties, isLoading, deleteProperty, updateProperty } =
@@ -83,7 +90,7 @@ const PropertiesList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="lg:flex space-y-3 lg:space-y-0 items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Properties</h1>
           <p className="text-gray-600">Manage your venue listings</p>
@@ -114,19 +121,20 @@ const PropertiesList = () => {
             </div>
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-400" />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
-              >
-                {propertyTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type === "all"
-                      ? "All Types"
-                      : type.charAt(0).toUpperCase() + type.slice(1)}
-                  </option>
-                ))}
-              </select>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-full lg:w-[180px]">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="w-full lg:w-auto">
+                  {propertyTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type === "all"
+                        ? "All Types"
+                        : type.charAt(0).toUpperCase() + type.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -166,7 +174,7 @@ const PropertiesList = () => {
               className="hover:shadow-md transition-shadow"
             >
               <CardHeader>
-                <div className="flex items-start justify-between">
+                <div className="lg:flex space-y-3 lg:space-y-0 items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <CardTitle className="text-xl">{property.name}</CardTitle>
@@ -190,7 +198,7 @@ const PropertiesList = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex w-fit lg:w-auto ml-auto lg:ml-0 items-center gap-2">
                     <Button
                       variant="outline"
                       className="cursor-pointer"

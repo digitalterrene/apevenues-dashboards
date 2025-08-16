@@ -62,7 +62,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               src={"/logo.svg"}
               className=" h-12 font-serif font-bold"
             />
-            sfd
           </SidebarHeader>
 
           <SidebarContent className="p-4">

@@ -242,7 +242,7 @@ export const ServiceFormComponent = () => {
   return (
     <div className="space-y-6">
       {/* Header and Back Button */}
-      <div className="flex w-full justify-between items-start gap-4">
+      <div className="lg:flex space-y-3 lg:space-y-0 w-full justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {isEditing ? "Edit Service" : "Add New Service"}

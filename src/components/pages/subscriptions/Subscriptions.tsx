@@ -1,3 +1,4 @@
+// components/pages/subscriptions/Subscriptions.tsx
 "use client";
 import { useAuth } from "@/contexts/AuthContext";
 import React from "react";
@@ -12,8 +13,7 @@ export default function Subscriptions({
   propertiesPageProps: any;
 }) {
   const { user } = useAuth();
-  // console.log({ servicesPageprops, propertiesPageProps });
-  // console.log({ businessType: user?.businessType });
+
   return (
     <div>
       {user?.businessType === "service-provider" ? (
@@ -24,7 +24,6 @@ export default function Subscriptions({
       ) : (
         <PropertiesSubscriptionsPage
           subscriptionsProps={propertiesPageProps?.subscriptionsProps}
-          userPlansProps={propertiesPageProps?.userPlansProps}
         />
       )}
     </div>

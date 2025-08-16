@@ -57,7 +57,7 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="lg:flex space-y-3 lg:space-y-0 items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Dashboard Overview
