@@ -1,3 +1,4 @@
+// app/api/bookings/business/route.ts
 import { NextResponse } from "next/server";
 import { MongoClient, ObjectId } from "mongodb";
 import { cookies } from "next/headers";
@@ -18,22 +19,44 @@ export async function GET(request: Request) {
 
     const client = await MongoClient.connect(process.env.MONGODB_URI!);
     const db = client.db();
-
+    console.log({ userId });
     const bookings = await db
       .collection("bookings")
-      .find({ user_id: userId })
-      .sort({ createdAt: -1 })
+      .aggregate([
+        { $match: { user_id: userId } },
+        {
+          $lookup: {
+            from: "bookingPayments",
+            localField: "_id",
+            foreignField: "bookingId",
+            as: "paymentInfo",
+          },
+        },
+        {
+          $addFields: {
+            isPaid: { $anyElementTrue: "$paymentInfo" },
+            unlockedAt: { $arrayElemAt: ["$paymentInfo.paymentDate", 0] },
+          },
+        },
+        { $sort: { createdAt: -1 } },
+      ])
       .toArray();
 
     await client.close();
-
+    const restrictedInfo = {};
     return NextResponse.json({
       success: true,
-      bookings: bookings.map((booking) => ({
-        ...booking,
-        id: booking._id.toString(),
-        _id: undefined,
-      })),
+      bookings: bookings.map(
+        ({ customerName, customerEmail, customerPhone, ...booking }) => ({
+          ...booking,
+          customerName: booking.isPaid ? customerName : "locked",
+          customerEmail: booking.isPaid ? customerEmail : "locked",
+          customerPhone: booking.isPaid ? customerPhone : "locked",
+          id: booking._id.toString(),
+          _id: undefined,
+          paymentInfo: undefined,
+        })
+      ),
     });
   } catch (error) {
     console.error("Get business bookings error:", error);

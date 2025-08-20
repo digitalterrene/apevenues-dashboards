@@ -1,9 +1,19 @@
+"use client";
 
-'use client'
-import DashboardHome from '../dashboard/DashboardHome';
+import { useAuth } from "@/contexts/AuthContext";
+import React from "react";
+import ServicesDashboard from "./ServicesDashboard";
+import PropertiesDashboard from "./PropertiesDashboard";
 
-const Dashboard = () => {
-  return <DashboardHome />;
-};
-
-export default Dashboard;
+export default function Dashboard() {
+  const { user } = useAuth();
+  return (
+    <>
+      {user?.businessType === "service-provider" ? (
+        <ServicesDashboard />
+      ) : user?.businessType === "property-provider" ? (
+        <PropertiesDashboard />
+      ) : null}
+    </>
+  );
+}
