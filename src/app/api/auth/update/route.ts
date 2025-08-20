@@ -35,7 +35,7 @@ export async function PUT(request: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value;
-    console.log({ token });
+    // console.log({ token });
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

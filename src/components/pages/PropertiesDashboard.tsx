@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Building2, Plus, Eye, Users, TrendingUp, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const DashboardHome = () => {
+const PropertiesDashboard = () => {
   const { properties, isLoading } = useProperties();
   const { user } = useAuth();
   const router = useRouter();
@@ -60,7 +60,7 @@ const DashboardHome = () => {
       <div className="lg:flex space-y-3 lg:space-y-0 items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Dashboard Overview
+            Properties Dashboard
           </h1>
           <p className="text-gray-600">
             Manage your venue listings and business profile
@@ -232,4 +232,4 @@ const DashboardHome = () => {
   );
 };
 
-export default DashboardHome;
+export default PropertiesDashboard;

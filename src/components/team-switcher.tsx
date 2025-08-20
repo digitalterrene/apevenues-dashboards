@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
 
 export function TeamSwitcher({
   teams,
@@ -42,15 +43,13 @@ export function TeamSwitcher({
           size="lg"
           className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
-          <div className="  bg-[#6BADA0]  text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-            APE
-          </div>
-          <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-medium">
-              Amalgamated Properties & Events
-            </span>
-            <span className="truncate text-xs">Business Dashboard</span>
-          </div>
+          <Image
+            alt="APE Dashboard Logo"
+            height={12}
+            width={200}
+            src={"/logo.svg"}
+            className=" h-12 font-serif font-bold"
+          />
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>

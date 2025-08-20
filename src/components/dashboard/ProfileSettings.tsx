@@ -92,7 +92,7 @@ const ProfileSettings = () => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 mt-3  ">
         {/* Rest of your form remains the same */}
         {/* Business Information */}
         <Card>
@@ -397,7 +397,7 @@ const ProfileSettings = () => {
         <div className="flex justify-end">
           <Button
             type="submit"
-            className="bg-[#6BADA0] hover:bg-[#8E9196]"
+            className="bg-[#6BADA0] cursor-pointer hover:bg-[#8E9196]"
             disabled={isLoading}
           >
             {isLoading ? "Saving..." : "Save Changes"}

@@ -28,6 +28,7 @@ import {
   Search,
   X,
   Check,
+  Lock,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "../../contexts/AuthContext";
@@ -35,6 +36,7 @@ import { toast } from "sonner";
 import { Service } from "@/types/service";
 
 interface BookingRequest {
+  isPaid: boolean;
   totalServiceCost: ReactNode;
   selectedServices: any;
   id: string;
@@ -50,6 +52,7 @@ interface BookingRequest {
   status: "pending" | "confirmed" | "rejected";
   createdAt: string;
   updatedAt: string;
+  unlockedAt?: string;
 }
 
 const Bookings = () => {
@@ -59,14 +62,99 @@ const Bookings = () => {
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
-  // Update the updateBookingStatus function to use Sonner correctly
+
+  // Payment configuration
+  const config = {
+    reference: new Date().getTime().toString(),
+    email: user?.email || "",
+    amount: 2500 * 100, // in kobo
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
+    metadata: {
+      bookingId: selectedBooking,
+    },
+  };
+
+  const handleUnlockBooking = async (bookingId: string) => {
+    const toastId = toast.loading("Initializing payment...");
+    try {
+      const response = await fetch(
+        "/api/paystack/property-providers/unlock-booking-request/init",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ bookingId }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Redirect to Paystack payment page
+        //fetch the payment link
+        // const paymentLinkResponse = await fetch(
+        //   "/api/paystack/property-providers/unlock-booking-request"
+        // );
+        // const paymentLinkJson = await paymentLinkResponse.json();
+        // window.location.href = `${paymentLinkJson?.plan.url}`;
+        // Redirect to Paystack payment page
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error(data.error || "Failed to initialize payment");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Payment initialization failed",
+        {
+          id: toastId,
+          icon: <X className="h-4 w-4" />,
+        }
+      );
+    }
+  };
+
+  const fetchBookings = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/bookings/business");
+      const data = await response.json();
+
+      if (response.ok) {
+        setBookings(data.bookings);
+      } else {
+        toast.error(data.error || "Failed to fetch bookings", {
+          style: {
+            backgroundColor: "#D22B2B",
+            color: "white",
+            border: "none",
+          },
+          icon: <X className="h-4 w-4" />,
+        });
+      }
+    } catch (error) {
+      toast.error("Network error occurred", {
+        style: {
+          backgroundColor: "#D22B2B",
+          color: "white",
+          border: "none",
+        },
+        icon: <X className="h-4 w-4" />,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const updateBookingStatus = async (
     bookingId: string,
     newStatus: "confirmed" | "rejected"
   ) => {
-    // Show loading toast
     const toastId = toast.loading("Updating booking status...");
 
     try {
@@ -88,7 +176,6 @@ const Bookings = () => {
               : booking
           )
         );
-        // Success toast
         toast.success(`Booking has been ${newStatus}`, {
           id: toastId,
           style: {
@@ -102,7 +189,6 @@ const Bookings = () => {
         throw new Error(data.error || "Failed to update booking");
       }
     } catch (error) {
-      // Error toast
       toast.error(
         error instanceof Error
           ? error.message
@@ -121,38 +207,6 @@ const Bookings = () => {
   };
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/bookings/business");
-        const data = await response.json();
-
-        if (response.ok) {
-          setBookings(data.bookings);
-        } else {
-          toast.error(data.error || "Failed to fetch bookings", {
-            style: {
-              backgroundColor: "#D22B2B",
-              color: "white",
-              border: "none",
-            },
-            icon: <X className="h-4 w-4" />,
-          });
-        }
-      } catch (error) {
-        toast.error("Network error occurred", {
-          style: {
-            backgroundColor: "#D22B2B",
-            color: "white",
-            border: "none",
-          },
-          icon: <X className="h-4 w-4" />,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (user) {
       fetchBookings();
     }
@@ -161,7 +215,7 @@ const Bookings = () => {
   useEffect(() => {
     filterBookings();
   }, [bookings, searchTerm, statusFilter]);
-  console.log({ bookings });
+
   const filterBookings = () => {
     let filtered = bookings;
 
@@ -341,6 +395,12 @@ const Bookings = () => {
                     </CardTitle>
                     <CardDescription>
                       Booking request from {booking?.customerName}
+                      {booking?.unlockedAt && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          (Unlocked on{" "}
+                          {format(new Date(booking.unlockedAt), "PP")})
+                        </span>
+                      )}
                     </CardDescription>
                   </div>
                   <Badge className={getStatusColor(booking?.status)}>
@@ -381,16 +441,42 @@ const Bookings = () => {
                     </div>
                   </div>
                 </div>
-                {/* Selected services */}
-                {booking?.selectedServices?.length > 0 && (
-                  <div className="mt-10">
+
+                {/* Payment CTA for unpaid bookings */}
+                {!booking.isPaid && (
+                  <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Lock className="h-5 w-5 text-yellow-600" />
+                        <div>
+                          <h4 className="font-medium text-yellow-800">
+                            Booking details locked
+                          </h4>
+                          <p className="text-sm text-yellow-700">
+                            Pay R250 to view full booking details
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleUnlockBooking(booking.id)}
+                        className="bg-[#6BADA0] hover:bg-[#8E9196]"
+                      >
+                        Unlock Now
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected services (only show if paid) */}
+                {booking.isPaid && booking?.selectedServices?.length > 0 && (
+                  <div className="mt-6">
                     <div className="flex justify-between">
                       <h4 className="font-medium text-sm text-gray-900 mb-1">
                         Services Requested
                       </h4>
-                      <Badge className="text-sm bg-[#6BADA0]  font-medium">
+                      <Badge className="text-sm bg-[#6BADA0] font-medium">
                         R{booking?.totalServiceCost}
-                      </Badge>{" "}
+                      </Badge>
                     </div>
                     <div className="grid gap-4 grid-cols-3">
                       {booking?.selectedServices?.map((service: Service) => (
@@ -424,7 +510,8 @@ const Bookings = () => {
                   </div>
                 )}
 
-                {booking?.specialRequests && (
+                {/* Special requests (only show if paid) */}
+                {booking.isPaid && booking?.specialRequests && (
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                     <h4 className="font-medium text-sm text-gray-900 mb-1">
                       Special Requests:
@@ -435,7 +522,8 @@ const Bookings = () => {
                   </div>
                 )}
 
-                {booking?.status === "pending" && (
+                {/* Action buttons (only show if paid) */}
+                {booking.isPaid && booking?.status === "pending" && (
                   <div className="flex space-x-3 mt-6">
                     <Button
                       onClick={() =>

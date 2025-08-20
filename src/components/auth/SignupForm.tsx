@@ -60,7 +60,10 @@ const SignupForm = () => {
           description:
             "Welcome to APE Dashboard. You can now manage your properties.",
         });
-        router.push("/dashboard");
+        router.refresh();
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 2000);
       } else {
         toast.error("Signup failed", {
           description: "An account with this email already exists.",

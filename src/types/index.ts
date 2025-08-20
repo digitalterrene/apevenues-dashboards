@@ -77,3 +77,11 @@ export type Plan = {
   description: string;
   id: string;
 };
+export type BookingRequestFee = {
+  type: string;
+  price: number;
+  url: `https://${string}`;
+  name: string;
+  description: string;
+  id: string;
+};

@@ -117,8 +117,15 @@ const ServiceRequests = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        // Additional client-side filtering for safety
+        const uniqueBundles = data.bundles.filter(
+          (bundle: any, index: number, self: any[]) =>
+            index ===
+            self.findIndex((b) => b.transactionId === bundle.transactionId)
+        );
+
         setKeyBundles(
-          data.bundles.map((bundle: any) => ({
+          uniqueBundles.map((bundle: any) => ({
             _id: bundle._id.toString(),
             bundleName: bundle.bundleName,
             keysRemaining: bundle.keysRemaining,
@@ -658,7 +665,7 @@ const ServiceRequests = () => {
             )}
             {/* Key Bundle Selection Modal */}
             <Dialog open={acceptModalOpen} onOpenChange={setAcceptModalOpen}>
-              <DialogContent>
+              <DialogContent className="h-[80vh]   overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Select Key Bundle</DialogTitle>
                   <DialogDescription>
