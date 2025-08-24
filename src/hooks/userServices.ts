@@ -8,6 +8,7 @@ import { toastStyles } from "@/lib/data/toast";
 
 export const useServices = () => {
   const [services, setServices] = useState<any[]>([]);
+  const [serviceListings, setServiceListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -24,6 +25,25 @@ export const useServices = () => {
 
       if (response.ok) {
         setServices(data.services);
+      } else {
+        setError(data.error || "Failed to fetch services");
+      }
+    } catch (err) {
+      setError("Network error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const fetchServiceListings = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/services/listings`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setServiceListings(data.services);
       } else {
         setError(data.error || "Failed to fetch services");
       }
@@ -241,6 +261,9 @@ export const useServices = () => {
     addService,
     updateService,
     deleteService,
+    fetchServiceListings,
+    serviceListings,
+    setServiceListings,
     getServiceById,
     refreshServices: fetchServices,
   };

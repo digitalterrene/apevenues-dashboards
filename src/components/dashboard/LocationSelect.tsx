@@ -171,14 +171,14 @@ const LocationSelect = ({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <Label htmlFor="address">Street Address *</Label>
+        <Label htmlFor="address">Street Address</Label>
         <Input
           id="address"
           name="address"
           placeholder="Enter street address"
           value={propertyAddress.address}
           onChange={handleAddressChange}
-          required
+          // required - removed it since we are sharing the utility component with the ServiceForm which does not require it
         />
       </div>
 
@@ -220,14 +220,13 @@ const LocationSelect = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="zipCode">ZIP Code *</Label>
+          <Label htmlFor="zipCode">ZIP Code</Label>
           <Input
             id="zipCode"
             name="zipCode"
             placeholder="Enter ZIP code"
             value={propertyAddress.zipCode}
             onChange={handleZipCodeChange}
-            required
           />
         </div>
       </div>

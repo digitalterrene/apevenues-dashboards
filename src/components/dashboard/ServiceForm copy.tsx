@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   Check,
   ChevronsUpDown,
-  AlertCircleIcon,
 } from "lucide-react";
 import {
   Card,
@@ -41,8 +40,6 @@ import {
   CommandItem,
   CommandList,
 } from "../ui/command";
-import LocationSelect from "./LocationSelect";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 interface Service {
   id?: string;
@@ -93,19 +90,10 @@ export const ServiceFormComponent = () => {
     isActive: true,
     category: "", // Changed from "other" to empty string
   });
-  const [uploadError, setUploadError] = useState<{
-    type: "size" | "format" | null;
-    message: string;
-  }>({ type: null, message: "" });
+
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [location, setLocation] = useState({
-    address: "",
-    city: "",
-    zipCode: "",
-    province: "",
-  });
 
   const durationOptions = [
     { value: "hour", label: "Per Hour" },
@@ -155,12 +143,10 @@ export const ServiceFormComponent = () => {
 
     try {
       if (isEditing && id) {
-        // console.log({ updating: { ...formData, ...location } });
-        await updateService(id, { ...formData, ...location });
-        // toast.success("Service updated successfully");
+        await updateService(id, formData);
+        toast.success("Service updated successfully");
       } else {
-        // console.log({ updating: { ...formData, ...location } });
-        await addService({ ...formData, ...location });
+        await addService(formData);
         // toast.success("Service added successfully");
       }
 
@@ -260,31 +246,6 @@ export const ServiceFormComponent = () => {
       setUploadingImages(false);
     }
   };
-  const handleLocationChange = (newLocation: {
-    address: string;
-    city: string;
-    zipCode: string;
-    province: string;
-  }) => {
-    setLocation(newLocation);
-  };
-  const handleSizeError = () => {
-    setUploadError({
-      type: "size",
-      message: "Max file size exceeded. Please try a smaller image (max 20KB)",
-    });
-  };
-
-  const handleTypeError = () => {
-    setUploadError({
-      type: "format",
-      message: "Invalid file type. Please upload JPG, PNG, or WEBP files only.",
-    });
-  };
-
-  const clearError = () => {
-    setUploadError({ type: null, message: "" });
-  };
   return (
     <div className="space-y-6">
       {/* Header and Back Button */}
@@ -333,7 +294,7 @@ export const ServiceFormComponent = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">Price (Optional - Estimated)</Label>
+                <Label htmlFor="price">Price *</Label>
                 <Input
                   id="price"
                   name="price"
@@ -342,6 +303,8 @@ export const ServiceFormComponent = () => {
                   value={formData.price}
                   onChange={handleChange}
                   min="0"
+                  step="0.01"
+                  required
                 />
               </div>
             </div>
@@ -480,7 +443,7 @@ export const ServiceFormComponent = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="duration">Pricing Duration (Optional)</Label>
+                <Label htmlFor="duration">Pricing Duration *</Label>
                 <Select
                   value={formData.duration}
                   onValueChange={(value) =>
@@ -500,7 +463,6 @@ export const ServiceFormComponent = () => {
                 </Select>
               </div>
             </div>
-            <LocationSelect onLocationChange={handleLocationChange} />
           </CardContent>
         </Card>
 
@@ -531,34 +493,15 @@ export const ServiceFormComponent = () => {
                 </div>
               ))}
 
-              {/* Error Alert */}
-              {uploadError.type && (
-                <Alert variant="destructive" className="mb-4 h-full">
-                  <AlertCircleIcon className="h-4 w-4" />
-                  <AlertTitle>
-                    {uploadError.type === "size"
-                      ? "File too large"
-                      : "Invalid file type"}
-                  </AlertTitle>
-                  <AlertDescription>{uploadError.message}</AlertDescription>
-                </Alert>
-              )}
-
               {formData.images.length < MAX_IMAGES && (
                 <FileUploader
                   multiple={true}
                   handleChange={handleImageChange}
-                  name="file-upload"
+                  name="file"
                   types={fileTypes}
-                  maxSize={2} // 2MB
-                  onSizeError={handleSizeError}
-                  onTypeError={handleTypeError}
                   disabled={uploadingImages}
                 >
-                  <div
-                    className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors p-4"
-                    onClick={clearError} // Clear error when user clicks to try again
-                  >
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors p-4">
                     {uploadingImages ? (
                       <div className="text-center">
                         <p>Uploading...</p>
@@ -575,9 +518,6 @@ export const ServiceFormComponent = () => {
                         <p className="text-xs text-gray-500 mt-2">
                           JPG, PNG, WEBP (max{" "}
                           {MAX_IMAGES - formData.images.length} more)
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Max file size: 20KB
                         </p>
                       </div>
                     )}
@@ -625,7 +565,7 @@ export const ServiceFormComponent = () => {
           <Button
             type="submit"
             className="bg-[#6BADA0] hover:bg-[#8E9196]"
-            disabled={isLoading}
+            disabled={isLoading || uploadingImages || !formData.category}
           >
             {isLoading
               ? "Saving..."
