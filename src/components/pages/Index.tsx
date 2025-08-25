@@ -150,12 +150,12 @@ const Index = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
-              onClick={() => router.push("/signup")}
+              onClick={() => router.push("/service-listings")}
               size="lg"
               variant="secondary"
               className="bg-white cursor-pointer text-[#6BADA0] hover:bg-gray-50 lg:text-lg px-8 py-3"
             >
-              Start Free Trial
+              Browse Services
             </Button>
             <Button
               onClick={() => router.push("/listings")}

@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Check,
   ChevronsUpDown,
+  AlertCircleIcon,
 } from "lucide-react";
 import {
   Card,
@@ -23,12 +24,6 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useServices } from "@/hooks/userServices";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../ui/accordion";
 import { serviceTypes } from "@/lib/data/service-types";
 import {
   Select,
@@ -46,6 +41,9 @@ import {
   CommandItem,
   CommandList,
 } from "../ui/command";
+import LocationSelect from "./LocationSelect";
+import { useLocationContext } from "@/contexts/LocationContext";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 interface Service {
   id?: string;
@@ -63,8 +61,9 @@ interface Service {
 
 export const ServiceEditForm = ({ id }: { id: string }) => {
   const isEditing = Boolean(id);
-  const { services, addService, updateService, getServiceById } = useServices();
+  const { addService, updateService, getServiceById } = useServices();
   const router = useRouter();
+  const { setInputs: setLocationContextInputs } = useLocationContext();
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
@@ -108,11 +107,19 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
     minAge: undefined,
     availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
   });
-
+  const [uploadError, setUploadError] = useState<{
+    type: "size" | "format" | null;
+    message: string;
+  }>({ type: null, message: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-
+  const [location, setLocation] = useState({
+    address: "",
+    city: "",
+    zipCode: "",
+    province: "",
+  });
   const durationOptions = [
     { value: "hour", label: "Per Hour" },
     { value: "day", label: "Per Day" },
@@ -135,6 +142,20 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
             ...service,
             // If category doesn't match any service type, keep it as is (for backward compatibility)
             category: matchedType ? service.category : service.category,
+          });
+          setLocationContextInputs({
+            address: service?.address,
+            city: service?.city,
+            zipCode: service?.zipCode,
+            province: service?.province,
+          });
+          console.log({
+            location: {
+              address: service?.address,
+              city: service?.city,
+              zipCode: service?.zipCode,
+              province: service?.province,
+            },
           });
           setImagePreviews(service.images || []);
         }
@@ -163,10 +184,11 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
     image: File
   ): Promise<string | undefined> => {
     const toastId = toast.loading("Uploading image...");
+
     try {
       const formData = new FormData();
       formData.append("file", image);
-      formData.append("upload_preset", "services"); // Cloudinary preset if using
+      formData.append("upload_preset", "services");
 
       const res = await fetch("/api/upload-image", {
         method: "POST",
@@ -176,7 +198,7 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
       const data = await res.json();
 
       if (res.ok) {
-        const imageUrl = data.secure_url || data.url || data.imageUrl;
+        const imageUrl = data.secure_url || data.url || data.imgUrl;
         if (imageUrl) {
           toast.success("Image uploaded successfully", { id: toastId });
           return imageUrl;
@@ -260,9 +282,9 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
 
     try {
       if (isEditing && id) {
-        await updateService(id, formData);
+        await updateService(id, { ...formData, ...location });
       } else {
-        await addService(formData);
+        await addService({ ...formData, ...location });
       }
 
       setTimeout(() => {
@@ -273,6 +295,32 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
       setIsLoading(false);
     }
   };
+  const handleLocationChange = (newLocation: {
+    address: string;
+    city: string;
+    zipCode: string;
+    province: string;
+  }) => {
+    setLocation(newLocation);
+  };
+  const handleSizeError = () => {
+    setUploadError({
+      type: "size",
+      message: "Max file size exceeded. Please try a smaller image (max 20KB)",
+    });
+  };
+
+  const handleTypeError = () => {
+    setUploadError({
+      type: "format",
+      message: "Invalid file type. Please upload JPG, PNG, or WEBP files only.",
+    });
+  };
+
+  const clearError = () => {
+    setUploadError({ type: null, message: "" });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header and Back Button */}
@@ -307,6 +355,7 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
               Enter the details about your service
             </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -320,127 +369,17 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
                   required
                 />
               </div>
-              <div className="grid grid-cols-1   gap-4">
-                <div>
-                  <Label htmlFor="duration">Service Type</Label>
-                  <div>
-                    <Popover open={open} onOpenChange={setOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={open}
-                          className="w-full justify-between"
-                        >
-                          {getSelectedCategoryName()}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="end"
-                        className="w-full lg:w-[400px] p-0"
-                      >
-                        <Command>
-                          <CommandInput
-                            placeholder="Search service types..."
-                            value={searchValue}
-                            onValueChange={setSearchValue}
-                          />
-                          <CommandList>
-                            <CommandEmpty>No service type found.</CommandEmpty>
-                            {serviceTypes.map((group) => (
-                              <CommandGroup
-                                key={group.category}
-                                heading={group.category}
-                              >
-                                {group.types
-                                  .filter((type) =>
-                                    filteredServices.some(
-                                      (t) => t.id === type.id
-                                    )
-                                  )
-                                  .map((type) => (
-                                    <CommandItem
-                                      key={type.id}
-                                      value={type.id}
-                                      onSelect={() => {
-                                        setFormData((prev) => ({
-                                          ...prev,
-                                          category: type.id,
-                                        }));
-                                        setOpen(false);
-                                      }}
-                                      className="cursor-pointer"
-                                    >
-                                      <div className="flex items-center gap-3 w-full">
-                                        <img
-                                          src={`/service-types/${group.category}/${type.id}.jpg`}
-                                          className="w-10 h-10 object-cover rounded-md"
-                                          alt={type.name}
-                                        />
-                                        <div className="flex-1">
-                                          <div className="font-medium">
-                                            {type.name}
-                                          </div>
-                                          <div className="text-xs text-gray-500 line-clamp-1">
-                                            {type.description}
-                                          </div>
-                                        </div>
-                                        <Check
-                                          className={`h-4 w-4 ${
-                                            formData.category === type.id
-                                              ? "opacity-100"
-                                              : "opacity-0"
-                                          }`}
-                                        />
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                              </CommandGroup>
-                            ))}
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-
-                    {/* Selected service preview */}
-                    {formData.category && (
-                      <div className="mt-4 border rounded-lg p-4">
-                        <div className="flex items-start gap-4">
-                          <img
-                            src={`/service-types/${
-                              allServiceTypes.find(
-                                (t) => t.id === formData.category
-                              )?.category
-                            }/${formData.category}.jpg`}
-                            className="w-20 h-20 object-cover rounded-lg"
-                            alt={
-                              allServiceTypes.find(
-                                (t) => t.id === formData.category
-                              )?.name
-                            }
-                          />
-                          <div>
-                            <h4 className="font-medium">
-                              {
-                                allServiceTypes.find(
-                                  (t) => t.id === formData.category
-                                )?.name
-                              }
-                            </h4>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {
-                                allServiceTypes.find(
-                                  (t) => t.id === formData.category
-                                )?.description
-                              }
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="price">Price (Optional - Estimated)</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  placeholder="0"
+                  value={formData.price}
+                  onChange={handleChange}
+                  min="0"
+                />
               </div>
             </div>
 
@@ -456,10 +395,237 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
                 required
               />
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="duration">Type of Event Service Provider</Label>
+                <div>
+                  {" "}
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-full h-10 justify-between"
+                      >
+                        {formData.category
+                          ? allServiceTypes.find(
+                              (type) => type.id === formData.category
+                            )?.name
+                          : "Select service type..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="end"
+                      className="w-full lg:w-[400px] p-0"
+                    >
+                      <Command>
+                        <CommandInput
+                          placeholder="Search service types..."
+                          value={searchValue}
+                          onValueChange={setSearchValue}
+                        />
+                        <CommandList>
+                          <CommandEmpty>No service type found.</CommandEmpty>
+                          {serviceTypes.map((group) => (
+                            <CommandGroup
+                              key={group.category}
+                              heading={group.category}
+                            >
+                              {group.types
+                                .filter((type) =>
+                                  filteredServices.some((t) => t.id === type.id)
+                                )
+                                .map((type) => (
+                                  <CommandItem
+                                    key={type.id}
+                                    value={type.id}
+                                    onSelect={() => {
+                                      handleServiceTypeSelect(type.id);
+                                      setOpen(false);
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <div className="flex items-center gap-3 w-full">
+                                      <img
+                                        src={`/service-types/${group.category}/${type.id}.jpg`}
+                                        className="w-10 h-10 object-cover rounded-md"
+                                        alt={type.name}
+                                      />
+                                      <div className="flex-1">
+                                        <div className="font-medium">
+                                          {type.name}
+                                        </div>
+                                        <div className="text-xs text-gray-500 line-clamp-1">
+                                          {type.description}
+                                        </div>
+                                      </div>
+                                      <Check
+                                        className={`h-4 w-4 ${
+                                          formData.category === type.id
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        }`}
+                                      />
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {/* Selected service preview (optional) */}
+                  {formData.category && (
+                    <div className="mt-4 border rounded-lg p-4">
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={`/service-types/${
+                            allServiceTypes.find(
+                              (t) => t.id === formData.category
+                            )?.category
+                          }/${formData.category}.jpg`}
+                          className="w-20 h-20 object-cover rounded-lg"
+                          alt={
+                            allServiceTypes.find(
+                              (t) => t.id === formData.category
+                            )?.name
+                          }
+                        />
+                        <div>
+                          <h4 className="font-medium">
+                            {
+                              allServiceTypes.find(
+                                (t) => t.id === formData.category
+                              )?.name
+                            }
+                          </h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {
+                              allServiceTypes.find(
+                                (t) => t.id === formData.category
+                              )?.description
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="duration">Pricing Duration (Optional)</Label>
+                <Select
+                  value={formData.duration}
+                  onValueChange={(value) =>
+                    handleSelectChange("duration", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durationOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <LocationSelect onLocationChange={handleLocationChange} />
           </CardContent>
         </Card>
 
         {/* Service Type Selection */}
+
+        {/* Service Images */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Images</CardTitle>
+            <CardDescription>
+              Upload images that represent your service (max {MAX_IMAGES})
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {formData.images.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={imagePreviews[index] || image}
+                    alt={`Service image ${index + 1}`}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Error Alert */}
+              {uploadError.type && (
+                <Alert variant="destructive" className="mb-4 h-full">
+                  <AlertCircleIcon className="h-4 w-4" />
+                  <AlertTitle>
+                    {uploadError.type === "size"
+                      ? "File too large"
+                      : "Invalid file type"}
+                  </AlertTitle>
+                  <AlertDescription>{uploadError.message}</AlertDescription>
+                </Alert>
+              )}
+
+              {formData.images.length < MAX_IMAGES && (
+                <FileUploader
+                  multiple={true}
+                  handleChange={handleImageChange}
+                  name="file-upload"
+                  types={fileTypes}
+                  maxSize={2} // 2MB
+                  onSizeError={handleSizeError}
+                  onTypeError={handleTypeError}
+                  disabled={uploadingImages}
+                >
+                  <div
+                    className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors p-4"
+                    onClick={clearError} // Clear error when user clicks to try again
+                  >
+                    {uploadingImages ? (
+                      <div className="text-center">
+                        <p>Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <ImagePlus className="mx-auto h-10 w-10 text-gray-400" />
+                        <p className="mt-2 text-sm text-gray-600">
+                          Drag & drop images here
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          or click to browse files
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          JPG, PNG, WEBP (max{" "}
+                          {MAX_IMAGES - formData.images.length} more)
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Max file size: 20KB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </FileUploader>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Settings */}
         <Card>
@@ -491,13 +657,14 @@ export const ServiceEditForm = ({ id }: { id: string }) => {
           <Button
             type="button"
             variant="outline"
+            className=" cursor-pointer "
             onClick={() => router.push("/dashboard/services")}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            className="bg-[#6BADA0] hover:bg-[#8E9196]"
+            className="bg-[#6BADA0] cursor-pointer hover:bg-[#8E9196]"
             disabled={isLoading || uploadingImages || !formData.category}
           >
             {isLoading
