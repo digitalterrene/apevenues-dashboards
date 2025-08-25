@@ -561,99 +561,63 @@ const ServiceListings = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search services by name, description, category, or location..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search services by name, description, category, or location..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {/* Clear Filters */}
+                <Button
+                  variant="outline"
+                  onClick={clearAllFilters}
+                  className="cursor-pointer"
+                >
+                  Clear All Filters
+                </Button>
               </div>
-
-              {/* Category Filter */}
-              <MultiSelect
-                options={categories.map((category) => ({
-                  label: category === "all" ? "All Categories" : category,
-                  value: category,
-                }))}
-                onValueChange={(value) =>
-                  handleFilterChange("category", value[0] || "all")
-                }
-                defaultValue={[filters.category]}
-                placeholder="Select Category"
-                // single={true}
-              />
-
-              {/* Location Filter */}
-              <MultiSelect
-                options={locations.map((location) => ({
-                  label: location === "all" ? "All Locations" : location,
-                  value: location,
-                }))}
-                onValueChange={(value) =>
-                  handleFilterChange("location", value[0] || "all")
-                }
-                defaultValue={[filters.location]}
-                placeholder="Select Location"
-                // single={true}
-              />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Price Filter */}
-                <div className="space-y-2">
-                  <Label>Price Range</Label>
-                  <Select
-                    value={filters.priceRange}
+                <div>
+                  <Label htmlFor="terms">Location(s)</Label>
+                  {/* Location Filter */}
+                  <MultiSelect
+                    options={locations.map((location) => ({
+                      label: location === "all" ? "All Locations" : location,
+                      value: location,
+                    }))}
                     onValueChange={(value) =>
-                      handleFilterChange("priceRange", value)
+                      handleFilterChange("location", value[0] || "all")
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Price Range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Prices</SelectItem>
-                      <SelectItem value="0-500">Under R500</SelectItem>
-                      <SelectItem value="500-1000">R500 - R1000</SelectItem>
-                      <SelectItem value="1000-2000">R1000 - R2000</SelectItem>
-                      <SelectItem value="2000-0">Over R2000</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    defaultValue={[filters.location]}
+                    placeholder="Select Location"
+                    // single={true}
+                  />
                 </div>
 
-                {/* Duration Filter */}
-                <div className="space-y-2">
-                  <Label>Duration</Label>
-                  <Select
-                    value={filters.duration}
+                <div>
+                  <Label htmlFor="terms">Location(s)</Label>
+                  {/* Category Filter */}
+                  <MultiSelect
+                    options={categories.map((category) => ({
+                      label: category === "all" ? "All Categories" : category,
+                      value: category,
+                    }))}
                     onValueChange={(value) =>
-                      handleFilterChange("duration", value)
+                      handleFilterChange("category", value[0] || "all")
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Duration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Durations</SelectItem>
-                      <SelectItem value="1 hour">1 hour</SelectItem>
-                      <SelectItem value="2 hours">2 hours</SelectItem>
-                      <SelectItem value="3 hours">3 hours</SelectItem>
-                      <SelectItem value="4+ hours">4+ hours</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    defaultValue={[filters.category]}
+                    placeholder="Select Category"
+                    // single={true}
+                  />
                 </div>
               </div>
-
-              {/* Clear Filters */}
-              <Button
-                variant="outline"
-                onClick={clearAllFilters}
-                className="cursor-pointer"
-              >
-                Clear All Filters
-              </Button>
             </div>
           </CardContent>
         </Card>
