@@ -12,6 +12,7 @@ import {
   Ruler,
   BedDouble,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -71,7 +72,7 @@ const ViewPropertyListing = () => {
 
   const handleEdit = () => {
     if (!property) return;
-    router.push(`/dashboard/properties/edit?id=${property?.id}`);
+    router.push(`/dashboard/properties/${property?.id}/edit`);
   };
 
   if (loading || !property) {
@@ -149,7 +150,7 @@ const ViewPropertyListing = () => {
       <div className="  max-w-7xl mx-auto  px-4 py-8">
         <div className="flex justify-between items-start mb-8">
           <div className="w-full">
-            <div className="w-full   items-center  flex justify-between">
+            <div className="w-full  space-y-3 lg:space-y-0  items-center  lg:flex justify-between">
               <h1 className="text-3xl font-bold tracking-tight">
                 {property?.name}
               </h1>
@@ -159,33 +160,45 @@ const ViewPropertyListing = () => {
                   className="cursor-pointer"
                   onClick={() => router.push("/listings")}
                 >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Properties
+                  <ArrowLeft className="h-4 w-4 lg:smr-2" />{" "}
+                  <span className="hidden lg:block"> Back to Properties</span>
                 </Button>
                 <Button
-                  onClick={() => handleBooking(property)}
-                  className="  bg-[#6BADA0] hover:bg-[#8E9196]"
+                  onClick={() =>
+                    router.push(
+                      `/listings/${property.id || property._id}/book-now`
+                    )
+                  }
+                  className="  bg-[#6BADA0] cursor-pointer hover:bg-[#8E9196]"
                 >
                   Book Now
                 </Button>
 
                 {(user?.id || user?._id) === property?.user_id && (
-                  <div className="flex gap-4">
-                    <Button variant="outline" onClick={handleEdit}>
-                      Edit Property
+                  <div className="flex ml-auto gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={handleEdit}
+                      className="cursor-pointer"
+                    >
+                      <Trash2 className="" />
+                      <span className="hidden lg:block">Edit Property</span>
                     </Button>
                     <Button
                       variant="destructive"
                       onClick={handleDelete}
                       disabled={deleting}
                     >
-                      {deleting ? "Deleting..." : "Delete Property"}
+                      <Trash2 className=" " />
+                      <span className="hidden lg:block">
+                        {deleting ? "Deleting..." : "Delete Property"}
+                      </span>
                     </Button>
                   </div>
                 )}
               </div>
             </div>
-            <div className="flex items-center mt-2 text-muted-foreground">
+            <div className="flex items-center lg:mt-2 mt-10 text-muted-foreground">
               <MapPin className="h-4 w-4 mr-1" />
               <span>
                 {property?.address
@@ -269,15 +282,15 @@ const ViewPropertyListing = () => {
               </CardHeader>
               <CardContent>
                 {Object.entries(groupedAmenities).length > 0 ? (
-                  <div className="gap-4 grid grid-cols-2">
+                  <div className="gap-4 lg:grid lgrid-cols-2">
                     {Object.entries(groupedAmenities).map(
                       ([category, amenities]) => (
                         <div
                           key={category}
-                          className="border rounded-lg w-full h-24 p-3"
+                          className="border rounded-lg w-full min-h-24 p-3"
                         >
                           <h3 className="font-medium mb-2">{category}</h3>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="flex w-full overflow-x-auto gap-2">
                             {amenities.map((amenity, index) => (
                               <div
                                 key={index}
@@ -342,14 +355,6 @@ const ViewPropertyListing = () => {
           </Card>
         </div>
       </div>
-      {/* Booking Modal */}
-      {showBookingModal && selectedProperty && (
-        <BookingModal
-          property={selectedProperty}
-          isOpen={showBookingModal}
-          onClose={() => setShowBookingModal(false)}
-        />
-      )}
     </div>
   );
 };

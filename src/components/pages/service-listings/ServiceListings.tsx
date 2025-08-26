@@ -12,13 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -30,10 +23,8 @@ import {
   ArrowUpDown,
   Grid,
   List,
-  Star,
   Clock,
   MapPin,
-  DollarSign,
   Send,
   Eye,
   X,
@@ -43,30 +34,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useServices } from "@/hooks/userServices";
 import Header from "@/components/layout/header";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { MultiSelect } from "@/components/multi-select";
-
-// interface ServiceFilters {
-//   category: string;
-//   location: string; // Changed from priceRange to location
-//   duration: string;
-//   rating: string;
-// }
+import ServiceRequestModal from "./ServiceRequestModal";
+import ServiceViewModal from "./ServiceViewModal";
 interface ServiceFilters {
   categories: string[];
   locations: string[];
@@ -257,7 +228,10 @@ const ServiceListings = () => {
     return filtered;
   }, [services, searchTerm, filters, sortBy, sortOptions]);
 
-  const handleFilterChange = (key: keyof ServiceFilters, value: string) => {
+  const handleFilterChange = (
+    key: keyof ServiceFilters,
+    value: string | string[]
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -437,85 +411,6 @@ const ServiceListings = () => {
         </div>
 
         {/* Filters */}
-        {!true && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  Filters & Search
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setViewMode(viewMode === "grid" ? "list" : "grid")
-                    }
-                    className="cursor-pointer"
-                  >
-                    {viewMode === "grid" ? (
-                      <List className="h-4 w-4" />
-                    ) : (
-                      <Grid className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <ArrowUpDown className="h-4 w-4 mr-2" />
-                        Sort
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      {sortOptions.map((option) => (
-                        <DropdownMenuItem
-                          key={option.value}
-                          onClick={() => setSortBy(option.value)}
-                          className={sortBy === option.value ? "bg-accent" : ""}
-                        >
-                          {option.label}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search services..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-
-                {/* Clear Filters */}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFilters({
-                      category: "all",
-                      location: "all",
-                      duration: "all",
-                      rating: "all",
-                    });
-                    setSearchTerm("");
-                  }}
-                  className="cursor-pointer"
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        {/* Filters */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -561,9 +456,9 @@ const ServiceListings = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Search */}
-                <div className="relative">
+                <div className="relative col-span-3">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Search services by name, description, category, or location..."
@@ -588,33 +483,31 @@ const ServiceListings = () => {
                   <Label htmlFor="terms">Location(s)</Label>
                   {/* Location Filter */}
                   <MultiSelect
-                    options={locations.map((location) => ({
-                      label: location === "all" ? "All Locations" : location,
+                    options={allLocations.map((location) => ({
+                      label: location,
                       value: location,
                     }))}
-                    onValueChange={(value) =>
-                      handleFilterChange("location", value[0] || "all")
+                    onValueChange={(values) =>
+                      handleFilterChange("locations", values)
                     }
-                    defaultValue={[filters.location]}
-                    placeholder="Select Location"
-                    // single={true}
+                    defaultValue={filters.locations}
+                    placeholder="Select Locations"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="terms">Location(s)</Label>
+                  <Label htmlFor="terms">Categories</Label>
                   {/* Category Filter */}
                   <MultiSelect
-                    options={categories.map((category) => ({
-                      label: category === "all" ? "All Categories" : category,
+                    options={allCategories.map((category) => ({
+                      label: category,
                       value: category,
                     }))}
-                    onValueChange={(value) =>
-                      handleFilterChange("category", value[0] || "all")
+                    onValueChange={(values) =>
+                      handleFilterChange("categories", values)
                     }
-                    defaultValue={[filters.category]}
-                    placeholder="Select Category"
-                    // single={true}
+                    defaultValue={filters.categories}
+                    placeholder="Select Categories"
                   />
                 </div>
               </div>
@@ -783,118 +676,25 @@ const ServiceListings = () => {
             ))}
           </div>
         )}
-
-        {/* Service Request Modal */}
-        <Dialog open={isRequestModalOpen} onOpenChange={setIsRequestModalOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Request Service</DialogTitle>
-              <DialogDescription>
-                Send a request for {selectedService?.name}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleRequestSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Tell us about your service needs..."
-                  value={requestData.message}
-                  onChange={(e) =>
-                    setRequestData({ ...requestData, message: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="budget">Budget (ZAR)</Label>
-                  <Input
-                    id="budget"
-                    type="number"
-                    placeholder="Enter your budget"
-                    value={requestData.budget}
-                    onChange={(e) =>
-                      setRequestData({ ...requestData, budget: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Preferred Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={requestData.date}
-                    onChange={(e) =>
-                      setRequestData({ ...requestData, date: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={closeModals}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-[#6BADA0] hover:bg-[#5a9c8f]"
-                >
-                  Send Request
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Service Modal */}
-        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>{selectedService?.name}</DialogTitle>
-              <DialogDescription>{selectedService?.category}</DialogDescription>
-            </DialogHeader>
-            {selectedService && (
-              <div className="space-y-4">
-                {selectedService.images &&
-                  selectedService.images.length > 0 && (
-                    <img
-                      src={selectedService.images[0]}
-                      alt={selectedService.name}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                  )}
-                <div>
-                  <h4 className="font-semibold">Description</h4>
-                  <p className="text-gray-600">{selectedService.description}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-semibold">Price</h4>
-                    <p className="text-gray-600">
-                      R{selectedService.price} / {selectedService.duration}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Location</h4>
-                    <p className="text-gray-600">
-                      {getLocationText(selectedService)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => openRequestModal(selectedService)}
-                    className="bg-[#6BADA0] hover:bg-[#5a9c8f]"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Request This Service
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
+      <div className="h-[90vh] py-10 overflow-y-auto">
+        <ServiceRequestModal
+          isRequestModalOpen={isRequestModalOpen}
+          setIsRequestModalOpen={setIsRequestModalOpen}
+          selectedService={selectedService}
+          handleRequestSubmit={handleRequestSubmit}
+          setRequestData={setRequestData}
+          requestData={requestData}
+          closeModals={closeModals}
+        />
+      </div>
+      <ServiceViewModal
+        isViewModalOpen={isViewModalOpen}
+        setIsViewModalOpen={setIsViewModalOpen}
+        selectedService={selectedService}
+        getLocationText={getLocationText}
+        openRequestModal={openRequestModal}
+      />
     </div>
   );
 };

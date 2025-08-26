@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -9,15 +9,18 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Users, Filter, Loader2, Frown } from "lucide-react";
+import {
+  MapPin,
+  Users,
+  Filter,
+  Loader2,
+  Frown,
+  Eye,
+  Send,
+  X,
+  Search,
+} from "lucide-react";
 import { Property } from "@/types";
 import BookingModal from "../../booking/BookingModal";
 import {
@@ -34,6 +37,8 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { debounce } from "@/lib/utils/debounce";
 import Link from "next/link";
 import Image from "next/image";
+import { MultiSelect } from "@/components/multi-select";
+import { Label } from "@/components/ui/label";
 
 const DEFAULT_LIMIT = 6;
 
@@ -45,70 +50,42 @@ const PublicListings = () => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(
     null
   );
-  const [currentPage, setCurrentPage] = useState(1);
 
   // State with safe defaults
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
 
-  // Get query params with fallbacks
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const typeFilter = searchParams.get("type") || "all";
-  const cityFilter = searchParams.get("city") || "all";
-  const searchQuery = searchParams.get("search") || "";
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [allCities, setAllCities] = useState<string[]>([]);
+  const [allTypes, setAllTypes] = useState<string[]>([]);
 
-  // Create query string with current params
-  const createQueryString = useCallback(
-    (params: Record<string, string | number>) => {
-      const newParams = new URLSearchParams(searchParams.toString());
-      Object.entries(params).forEach(([key, value]) => {
-        if (value === "all" || value === "") {
-          newParams.delete(key);
-        } else {
-          newParams.set(key, String(value));
-        }
-      });
-      return newParams.toString();
-    },
-    [searchParams]
-  );
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = DEFAULT_LIMIT;
 
-  // Update URL with new filters
-  const updateFilters = useCallback(
-    (newFilters: { [key: string]: string | number }) => {
-      router.push(
-        `${pathname}?${createQueryString({
-          ...Object.fromEntries(searchParams.entries()),
-          ...newFilters,
-          page: 1, // Reset to first page when filters change
-        })}`
-      );
-    },
-    [router, pathname, searchParams, createQueryString]
-  );
+  // Get initial filters from URL params if available
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    const urlTypes = searchParams.get("types")?.split(",") || [];
+    const urlCities = searchParams.get("cities")?.split(",") || [];
 
-  // Debounced search
-  const handleSearch = debounce((term: string) => {
-    updateFilters({ search: term });
-  }, 500);
+    setSearchTerm(urlSearch);
+    setSelectedTypes(urlTypes);
+    setSelectedCities(urlCities);
+  }, [searchParams]);
 
-  // Fetch properties with error handling
+  // Fetch all properties
   const fetchProperties = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: DEFAULT_LIMIT.toString(),
-        ...(typeFilter !== "all" && { type: typeFilter }),
-        ...(cityFilter !== "all" && { city: cityFilter }),
-        ...(searchQuery && { search: searchQuery }),
-      });
-
-      const response = await fetch(`/api/properties?${queryParams.toString()}`);
+      const response = await fetch("/api/properties");
 
       if (!response.ok) {
         throw new Error(
@@ -124,12 +101,23 @@ const PublicListings = () => {
         throw new Error(data?.error || "Invalid response from server");
       }
 
-      setProperties(data.properties || []);
-      setTotalCount(data.pagination?.total || 0);
+      const properties = data.properties || [];
+      setAllProperties(properties);
+
+      // Extract all unique cities and types for filters
+      const cities = new Set<string>();
+      const types = new Set<string>();
+
+      properties.forEach((property: Property) => {
+        if (property?.city) cities.add(property.city);
+        if (property?.type) types.add(property.type);
+      });
+
+      setAllCities(Array.from(cities).sort());
+      setAllTypes(Array.from(types).sort());
     } catch (err) {
       console.error("Fetch error:", err);
-      setProperties([]);
-      setTotalCount(0);
+      setAllProperties([]);
       setError(
         err instanceof Error ? err.message : "An unexpected error occurred"
       );
@@ -141,41 +129,93 @@ const PublicListings = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, typeFilter, cityFilter, searchQuery]);
+  }, []);
 
   useEffect(() => {
     fetchProperties();
   }, [fetchProperties]);
 
-  // Extract unique cities safely
-  const uniqueCities = React.useMemo(() => {
-    const cities = new Set<string>();
-    properties?.forEach((property) => {
-      if (property?.city) cities.add(property.city);
+  // Filter properties based on current filters
+  useEffect(() => {
+    const filtered = allProperties.filter((property) => {
+      // Search filter
+      const matchesSearch =
+        searchTerm === "" ||
+        property.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        property.description
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        property.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        property.province?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Type filter
+      const matchesType =
+        selectedTypes.length === 0 ||
+        selectedTypes.includes(property.type || "");
+
+      // City filter
+      const matchesCity =
+        selectedCities.length === 0 ||
+        selectedCities.includes(property.city || "");
+
+      return matchesSearch && matchesType && matchesCity;
     });
-    return Array.from(cities).sort();
-  }, [properties]);
 
-  const propertyTypes = [
-    { value: "restaurant", label: "Restaurant" },
-    { value: "bar", label: "Bar" },
-    { value: "cafe", label: "Cafe" },
-    { value: "club", label: "Club" },
-    { value: "hotel", label: "Hotel" },
-    { value: "other", label: "Other" },
-  ];
+    setFilteredProperties(filtered);
+  }, [allProperties, searchTerm, selectedTypes, selectedCities]);
 
-  const handleBooking = (property: Property) => {
-    if (!property?.id) {
-      toast.error("Invalid property selected");
-      return;
-    }
-    setSelectedProperty(property);
-    setShowBookingModal(true);
+  // Update URL with current filters
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (selectedTypes.length > 0) params.set("types", selectedTypes.join(","));
+    if (selectedCities.length > 0)
+      params.set("cities", selectedCities.join(","));
+    if (currentPage > 1) params.set("page", currentPage.toString());
+
+    router.push(`${pathname}?${params.toString()}`);
+  }, [
+    searchTerm,
+    selectedTypes,
+    selectedCities,
+    currentPage,
+    router,
+    pathname,
+  ]);
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedTypes([]);
+    setSelectedCities([]);
+    setCurrentPage(1);
   };
 
-  // Calculate total pages
-  const totalPages = Math.ceil(totalCount / DEFAULT_LIMIT);
+  // Handle filter changes
+  const handleFilterChange = (
+    filterType: "types" | "cities",
+    values: string[]
+  ) => {
+    if (filterType === "types") {
+      setSelectedTypes(values);
+    } else if (filterType === "cities") {
+      setSelectedCities(values);
+    }
+    setCurrentPage(1);
+  };
+
+  // Debounced search
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1);
+  };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
+  const paginatedProperties = filteredProperties.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Loading state
   if (isLoading) {
@@ -235,61 +275,73 @@ const PublicListings = () => {
         {/* Filters */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Filter className="h-5 w-5" />
-              <span>Filter Venues</span>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Filter className="h-5 w-5" />
+                <span>Filter Venues</span>
+              </div>
+              {/* Results count */}
+              <div className="text-sm text-gray-600 flex items-center justify-end">
+                {filteredProperties.length}{" "}
+                {filteredProperties.length === 1 ? "venue" : "venues"} found
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Input
-                placeholder="Search venues..."
-                defaultValue={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="min-w-0"
-              />
-
-              <Select
-                value={typeFilter}
-                onValueChange={(value) => updateFilters({ type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Venue Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {propertyTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={cityFilter}
-                onValueChange={(value) => updateFilters({ city: value })}
-                disabled={uniqueCities.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      uniqueCities.length ? "City" : "No cities available"
-                    }
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Search */}
+                <div className="relative col-span-3">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search venues by name, description, or location..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="pl-10"
                   />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Cities</SelectItem>
-                  {uniqueCities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                </div>
 
-              <div className="text-sm text-gray-600 flex items-center">
-                {totalCount} {totalCount === 1 ? "venue" : "venues"} found
+                <Button
+                  variant="outline"
+                  onClick={clearAllFilters}
+                  className="cursor-pointer"
+                >
+                  <X className="  mr-1" />
+                  Clear Filters
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Venue Type(s)</Label>
+                  <MultiSelect
+                    options={allTypes.map((type) => ({
+                      label: type.charAt(0).toUpperCase() + type.slice(1),
+                      value: type,
+                    }))}
+                    onValueChange={(values) =>
+                      handleFilterChange("types", values)
+                    }
+                    defaultValue={selectedTypes}
+                    placeholder="Select venue types"
+                  />
+                </div>
+
+                <div>
+                  <Label>Location(s)</Label>
+                  <MultiSelect
+                    options={allCities.map((city) => ({
+                      label: city,
+                      value: city,
+                    }))}
+                    onValueChange={(values) =>
+                      handleFilterChange("cities", values)
+                    }
+                    defaultValue={selectedCities}
+                    placeholder="Select locations"
+                    disabled={allCities.length === 0}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
@@ -297,7 +349,7 @@ const PublicListings = () => {
 
         {/* Properties Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {properties?.map((property) => (
+          {paginatedProperties.map((property) => (
             <Card key={property.id} className="h-full flex flex-col">
               <Link
                 href={`/listings/${property?.id}`}
@@ -374,13 +426,26 @@ const PublicListings = () => {
                     <span>Up to {property.capacity || "N/A"} guests</span>
                   </div>
                 </div>
-
-                <Button
-                  onClick={() => handleBooking(property)}
-                  className="w-full mt-auto bg-[#6BADA0] hover:bg-[#8E9196]"
-                >
-                  Book Now
-                </Button>
+                <div className="flex w-full justify-between gap-2">
+                  <Link
+                    className="w-full"
+                    href={`/listings/${property?._id || property?.id}/book-now`}
+                  >
+                    <Button className="w-full cursor-pointer mt-auto bg-[#6BADA0] hover:bg-[#8E9196]">
+                      <Send className="h-4 w-4 mr-2" />
+                      Request
+                    </Button>
+                  </Link>
+                  <Link
+                    className="w-full"
+                    href={`/listings/${property?._id || property?.id}`}
+                  >
+                    <Button variant="outline" className="cursor-pointer w-full">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -393,12 +458,10 @@ const PublicListings = () => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, page - 1))}
-                    // onClick={() => handlePageChange(Math.max(1, page - 1))}
-                    // disabled={page <= 1}
-                    size="sm"
+                    size={"sm"}
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     className={
-                      page <= 1
+                      currentPage <= 1
                         ? "opacity-50 cursor-not-allowed"
                         : "cursor-pointer"
                     }
@@ -409,20 +472,20 @@ const PublicListings = () => {
                   let pageNum;
                   if (totalPages <= 5) {
                     pageNum = i + 1;
-                  } else if (page <= 3) {
+                  } else if (currentPage <= 3) {
                     pageNum = i + 1;
-                  } else if (page >= totalPages - 2) {
+                  } else if (currentPage >= totalPages - 2) {
                     pageNum = totalPages - 4 + i;
                   } else {
-                    pageNum = page - 2 + i;
+                    pageNum = currentPage - 2 + i;
                   }
 
                   return (
                     <PaginationItem key={pageNum}>
                       <PaginationLink
-                        onClick={() => setCurrentPage(Math.min(page, page + 1))}
-                        size="sm"
-                        isActive={page === pageNum}
+                        size={"sm"}
+                        onClick={() => setCurrentPage(pageNum)}
+                        isActive={currentPage === pageNum}
                         className="cursor-pointer"
                       >
                         {pageNum}
@@ -433,16 +496,12 @@ const PublicListings = () => {
 
                 <PaginationItem>
                   <PaginationNext
+                    size={"sm"}
                     onClick={() =>
-                      setCurrentPage(Math.min(totalPages, page + 1))
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
                     }
-                    size="sm"
-                    // onClick={() =>
-                    //   handlePageChange(Math.min(totalPages, page + 1))
-                    // }
-                    // disabled={page >= totalPages}
                     className={
-                      page >= totalPages
+                      currentPage >= totalPages
                         ? "opacity-50 cursor-not-allowed"
                         : "cursor-pointer"
                     }
@@ -454,7 +513,7 @@ const PublicListings = () => {
         )}
 
         {/* Empty state */}
-        {properties?.length === 0 && !isLoading && (
+        {filteredProperties.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -463,16 +522,7 @@ const PublicListings = () => {
             <p className="text-gray-600 mb-4">
               Try adjusting your search filters
             </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                updateFilters({
-                  search: "",
-                  type: "all",
-                  city: "all",
-                });
-              }}
-            >
+            <Button variant="outline" onClick={clearAllFilters}>
               Clear all filters
             </Button>
           </div>

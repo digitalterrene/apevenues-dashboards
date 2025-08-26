@@ -308,7 +308,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
       open={isOpen}
       onOpenChange={(open) => !open && (onClose(), resetForm())}
     >
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[100vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Book {property.name}</DialogTitle>
           <DialogDescription>
